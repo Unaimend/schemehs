@@ -1,6 +1,6 @@
 module Main where
 
-import Parser
+import Interpreter
 import System.Environment
 import Control.Monad
 
