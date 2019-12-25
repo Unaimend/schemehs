@@ -3,15 +3,18 @@ module Parser where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Control.Monad
 
+-- Represents our AST, since in Scheme everything is a Val, we don't need a seperate tree representation
+--TODO Char, Float, Full-numeric tower
+--TODO backquote, vector
 data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Vector [LispVal]
-             | Number Integer
-             | String String --Ctor which takes a string
-             | Bool Bool --deriving(Show) --Ctor which takes a bool
+             | Number Integer -- Stores a Haskell Integer
+             | String String -- Stores a Haskell String
+             | Bool Bool deriving(Show) -- Stores a Haskell Boolean
 
-instance Show LispVal where show = showVal
+--instance Show LispVal where show = showVal
 
 
 
@@ -25,35 +28,33 @@ symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 spaces1 :: Parser ()
 spaces1 = skipMany1 space
 
-p :: Parser String
-p  = do many $ noneOf("\"")
 
+-- Parses a string which starts with a " and ends with a"
+-- TODO \\t \\n \\r \\ \" 
 parseString :: Parser LispVal
 parseString = do
   _ <- char '"' --Starts with a "
-  x <- p
+  -- Stops at "
+  x <- many $ noneOf("\"")
   _ <- char '"' --ends with a "
   return $ String x
 
+-- Parses a symbol
 parseAtom :: Parser LispVal
 parseAtom = do
   first <- letter <|> symbol --First char must be a letter or a sybmol
   --the following chars must be one of letter, digit or symbol
   rest <- many (letter <|> digit <|> symbol) 
   let atom = first:rest
+  --catch special atoms
   case atom of "#t" -> return $ Bool True
                "#f" -> return $ Bool True
-               "#"  -> parseVector
+               --"#"  -> parseVector
                _    -> return $ Atom atom
 
+--TODO Support octal and hexadecimal notation
 parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit
-
-parseNumberDo :: Parser LispVal
-parseNumberDo = do
-  str <- many1 digit
-  let str2 = read str :: Integer
-  return $ Number str2
 
 parseVector :: Parser LispVal
 parseVector = do
@@ -63,14 +64,18 @@ parseVector = do
   return $ Vector vec
 
 parseList :: Parser LispVal
+-- Parse lispExpr which hare seperated by one or more whitespace
 parseList = liftM List $ sepBy parseExpr spaces1
 
 parseDottedList :: Parser LispVal
 parseDottedList = do
+    -- what?
     head' <- endBy parseExpr spaces1
+    -- parses a dot then exactly one space and saves the expression after the space
     tail' <- char '.' >> spaces1 >> parseExpr
     return $ DottedList head' tail'
 
+-- TODO READ r5rs
 parseQuoted :: Parser LispVal
 parseQuoted = do
     _ <- char '\''
@@ -78,11 +83,13 @@ parseQuoted = do
     return $ List [Atom "quote", x]
 
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
-         <|> parseString
-         <|> parseNumber
+parseExpr = parseAtom --first try to parse a atom
+         <|> parseString -- if this fails try to parse a string
+         <|> parseNumber -- etc
          <|> parseQuoted
          <|> do _ <- char '('
+                -- parses a normal list until it encounter a dot, at which point it will go back and sstart to parse
+                -- a dotted list
                 x <- try parseList <|> parseDottedList
                 _ <- char ')'
                 return x
@@ -97,6 +104,7 @@ showVal (List contents) = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head' tail') = "(" ++ unwordsList head' ++ " . " ++ showVal tail' ++ ")"
 showVal (Vector contents) = "(" ++ unwordsList contents ++ ")"
 
+-- creates a string from an array of LispVals, it inserts space characters between original strings
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 

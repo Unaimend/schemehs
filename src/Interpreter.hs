@@ -34,17 +34,25 @@ extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
 
 eval :: LispVal -> ThrowsError LispVal
+-- Lift values into ThrowError LispVal because they evaluate to themself
 eval val@(String _) = return val
 eval val@(Number _) = return val
 eval val@(Bool _) = return val
+-- a quoted list should be taken as a literal, without evaluating its content
 eval (List [Atom "quote", val]) = return val
+-- Since everythin in lisp starts with a (, everythin will be parsed as list with content
+-- so we test against a List with sth. inside
 eval (List [Atom "if", pred, conseq, alt]) = 
+  --evaluate the condition of the if
      do result <- eval pred
         case result of
+          --evaluate else
              Bool False -> eval alt
+             --evaluate then
              otherwise  -> eval conseq
+-- applies func to all evaluated args
 eval (List (Atom func : args)) = mapM eval args >>= apply func
-eval (Vector contents) = return $ Vector $ extractValue $ mapM eval contents
+--eval (Vector contents) = return $ Vector $ extractValue $ mapM eval contents
 eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: String -> [LispVal] -> ThrowsError LispVal
