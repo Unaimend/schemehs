@@ -51,7 +51,8 @@ eval (List [Atom "if", pred, conseq, alt]) =
              --evaluate then
              otherwise  -> eval conseq
 -- applies func to all evaluated args
-eval (List (Atom func : args)) = mapM eval args >>= apply func
+eval (List (Atom funcName : args)) = do evalArgs <- mapM eval args
+                                        apply funcName evalArgs
 --eval (Vector contents) = return $ Vector $ extractValue $ mapM eval contents
 eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
