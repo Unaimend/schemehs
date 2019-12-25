@@ -21,9 +21,9 @@ instance Show LispVal where show = showVal
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 
--- Skips one ore more spaces
-spaces :: Parser ()
-spaces = skipMany1 space
+-- Skips one or more spaces
+spaces1 :: Parser ()
+spaces1 = skipMany1 space
 
 p :: Parser String
 p  = do many $ noneOf("\"")
@@ -58,17 +58,17 @@ parseNumberDo = do
 parseVector :: Parser LispVal
 parseVector = do
   _ <- char '('
-  vec <- sepBy parseExpr spaces
+  vec <- sepBy parseExpr spaces1
   _ <- char ')'
   return $ Vector vec
 
 parseList :: Parser LispVal
-parseList = liftM List $ sepBy parseExpr spaces
+parseList = liftM List $ sepBy parseExpr spaces1
 
 parseDottedList :: Parser LispVal
 parseDottedList = do
-    head' <- endBy parseExpr spaces
-    tail' <- char '.' >> spaces >> parseExpr
+    head' <- endBy parseExpr spaces1
+    tail' <- char '.' >> spaces1 >> parseExpr
     return $ DottedList head' tail'
 
 parseQuoted :: Parser LispVal
