@@ -3,8 +3,9 @@ module Interpreter where
 import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Parser
+--TODO Learn monads again and check what mapM is doing
 
-
+-- Type which represents all possible errors
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
                | Parser ParseError
@@ -15,7 +16,8 @@ data LispError = NumArgs Integer [LispVal]
 
 instance Show LispError where show = showError
 
-type ThrowsError = Either LispError
+--Type alias because all our function now return ThrowsError because they either throw or return valid data
+type ThrowsError a = Either LispError a
 
 showError :: LispError -> String
 showError (UnboundVar message varname)  = message ++ ": " ++ varname
@@ -28,21 +30,22 @@ showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
 showError (Parser parseErr)             = "Parse error at " ++ show parseErr
 
 
+-- TODO Raff ich immer noch nich ganz
 trapError action = catchError action (return . show)
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
 
 eval :: LispVal -> ThrowsError LispVal
--- Lift values into ThrowError LispVal because they evaluate to themself
+-- Lift values into ThrowError LispVal because they evaluate to themselves
 eval val@(String _) = return val
 eval val@(Number _) = return val
 eval val@(Bool _) = return val
 -- a quoted list should be taken as a literal, without evaluating its content
 eval (List [Atom "quote", val]) = return val
--- Since everythin in lisp starts with a (, everythin will be parsed as list with content
+-- Since everythin in lisp starts with a (, everything will be parsed as list with content
 -- so we test against a List with sth. inside
-eval (List [Atom "if", pred, conseq, alt]) = 
+eval (List [Atom "if", pred, conseq, alt]) =
   --evaluate the condition of the if
      do result <- eval pred
         case result of
@@ -51,16 +54,21 @@ eval (List [Atom "if", pred, conseq, alt]) =
              --evaluate then
              otherwise  -> eval conseq
 -- applies func to all evaluated args
+-- TODO Imlement different evaluation orders
 eval (List (Atom funcName : args)) = do evalArgs <- mapM eval args
                                         apply funcName evalArgs
 --eval (Vector contents) = return $ Vector $ extractValue $ mapM eval contents
+-- Since this is the last pattern it will only match if all other pattern failed which means that we parsed invalid lisp code
 eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: String -> [LispVal] -> ThrowsError LispVal
 apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
-                        ($ args)
+                        --operator section of the function application operator.
+                        --applies func to args if func is not Nothing
+                        ($ args) 
                         (lookup func primitives)
 
+-- Map of all primitive functions
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
@@ -135,25 +143,24 @@ symbol' ( val : tail') = case val of
                            otherwise -> return $ Bool False
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
-numericBinop op           []  = throwError $ NumArgs 2 []
+numericBinop op           []  = throwError $ NumArgs 2 [] --must provide exactly two arguments
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
-numericBinop op params        = mapM unpackNum params >>= return . Number . foldl1 op
+-- "cast" to number and apply the operator
+numericBinop op params        = mapM unpackNum params >>= return . Number . foldl1 op 
 
+-- applies the correct unpacker for the two arguments of a boolean binary operation
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
-boolBinop unpacker op args = if length args /= 2
+boolBinop unpacker op args = if length args /= 2 -- must provide exactly two arguments
                              then throwError $ NumArgs 2 args
-                             else do left <- unpacker $ args !! 0
-                                     right <- unpacker $ args !! 1
-                                     return $ Bool $ left `op` right
+                             else do left <- unpacker $ args !! 0 --unpack 1st arg
+                                     right <- unpacker $ args !! 1 --unpack 2nd arg
+                                     return $ Bool $ left `op` right --apply operation
 
-numBoolBinop  = boolBinop unpackNum
-strBoolBinop  = boolBinop unpackStr
-boolBoolBinop = boolBinop unpackBool
-
+-- conversion functions from lisp vals to haskell val
 unpackStr :: LispVal -> ThrowsError String
 unpackStr (String s) = return s
-unpackStr (Number s) = return $ show s
-unpackStr (Bool s)   = return $ show s
+unpackStr (Number s) = return $ show s --Type casting(weak typing)
+unpackStr (Bool s)   = return $ show s --Type casting(weak typing)
 unpackStr notString  = throwError $ TypeMismatch "string" notString
 
 unpackBool :: LispVal -> ThrowsError Bool
@@ -162,20 +169,27 @@ unpackBool notBool  = throwError $ TypeMismatch "boolean" notBool
 
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n
+-- if the val is a string try to convert it to a number(weak typing)
 unpackNum (String n) = let parsed = reads n in 
                            if null parsed 
                              then throwError $ TypeMismatch "number" $ String n
                              else return $ fst $ parsed !! 0
-
+-- singleton list can be converted to numbers, if the val in the list is convertible to number
 unpackNum (List [n]) = unpackNum n
 unpackNum notNum     = throwError $ TypeMismatch "number" notNum
 
+numBoolBinop  = boolBinop unpackNum
+strBoolBinop  = boolBinop unpackStr
+boolBoolBinop = boolBinop unpackBool
+
+-- implements the lisp car(head) function
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : xs)]         = return x
 car [DottedList (x : xs) _] = return x
 car [badArg]                = throwError $ TypeMismatch "pair" badArg
 car badArgList              = throwError $ NumArgs 1 badArgList
 
+--implements the lisp cdr(tail) function
 cdr :: [LispVal] -> ThrowsError LispVal
 cdr [List (x : xs)]         = return $ List xs
 cdr [DottedList [_] x]      = return x
@@ -183,7 +197,7 @@ cdr [DottedList (_ : xs) x] = return $ DottedList xs x
 cdr [badArg]                = throwError $ TypeMismatch "pair" badArg
 cdr badArgList              = throwError $ NumArgs 1 badArgList
 
-
+-- implements the lisp cons(concatination) functionn
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x1, List []] = return $ List [x1]
 cons [x, List xs] = return $ List $ x : xs
@@ -214,6 +228,8 @@ unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
                 return $ unpacked1 == unpacked2
         `catchError` (const $ return False)
 
+
+-- ignores type tags, e.g. equal? 2 "2" = #t but eqv? 2 "2" = #f
 equal :: [LispVal] -> ThrowsError LispVal
 equal [arg1, arg2] = do
       primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2) 
