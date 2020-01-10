@@ -17,9 +17,6 @@ data LispVal = Atom String
 --instance Show LispVal where show = showVal
 
 
-
-
-
 -- Recognizes if a character is a valid scheme symbol
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
