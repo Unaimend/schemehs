@@ -1,45 +1,46 @@
 {-# LANGUAGE ExistentialQuantification #-}
 module Interpreter where 
-import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Parser
 import Data.IORef
 
---TODO Learn monads again and check what mapM is doing
 
--- Type which represents all possible errors
-data LispError = NumArgs Integer [LispVal]
-               | TypeMismatch String LispVal
-               | Parser ParseError
-               | BadSpecialForm String LispVal
-               | NotFunction String String
-               | UnboundVar String String
-               | Default String
+import Data.IORef
+import Control.Monad.Except
 
-instance Show LispError where show = showError
+import System.Environment
+import Control.Monad
+import System.IO
 
---Type alias because all our function now return ThrowsError because they either throw or return valid data
-type ThrowsError a = Either LispError a
-
-showError :: LispError -> String
-showError (UnboundVar message varname)  = message ++ ": " ++ varname
-showError (BadSpecialForm message form) = message ++ ": " ++ show form
-showError (NotFunction message func)    = message ++ ": " ++ show func
-showError (NumArgs expected found)      = "Expected " ++ show expected 
-                                       ++ " args; found values " ++ unwordsList found
-showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
-                                       ++ ", found " ++ show found
-showError (Parser parseErr)             = "Parse error at " ++ show parseErr
+flushStr :: String -> IO ()
+flushStr str = putStr str >> hFlush stdout
 
 
--- TODO Raff ich immer noch nich ganz
-trapError action = catchError action (return . show)
+readPrompt :: String -> IO String
+readPrompt prompt = flushStr prompt >> getLine
 
-extractValue :: ThrowsError a -> a
-extractValue (Right val) = val
+evalAndPrint :: Env -> String -> IO ()
+evalAndPrint env expr =  evalString env expr >>= putStrLn
 
-type Env = IORef [(String, IORef LispVal)]
-type IOThrowsError a = ExceptT LispError IO a
+evalString :: Env -> String -> IO String
+evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>= eval env
+
+runOne :: String -> IO ()
+runOne expr = primitiveBindings >>= flip evalAndPrint expr
+
+runRepl :: IO ()
+runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "Lisp>>> ") . evalAndPrint
+
+
+
+
+until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
+until_ pred prompt action = do 
+   result <- prompt
+   if pred result 
+      then return ()
+      else action result >> until_ pred prompt action
+
 
 nullEnv :: IO Env
 nullEnv = newIORef []
@@ -94,8 +95,6 @@ eval env (Atom id) = getVar env id
 -- a quoted list should be taken as a literal, without evaluating its content
 eval env (List [Atom "set!", Atom var, form]) =
      eval env form >>= setVar env var
-eval env (List [Atom "define", Atom var, form]) =
-     eval env form >>= defineVar env var
 eval env (List [Atom "quote", val]) = return val
 -- Since everythin in lisp starts with a (, everything will be parsed as list with content
 -- so we test against a List with sth. inside
@@ -109,17 +108,47 @@ eval env (List [Atom "if", pred, conseq, alt]) =
              otherwise  -> eval env conseq
 -- applies func to all evaluated args
 -- TODO Imlement different evaluation orders
-eval env (List (Atom funcName : args)) = mapM (eval env) args >>= liftThrows . apply funcName
---eval (Vector contents) = return $ Vector $ extractValue $ mapM eval contents
+eval env (List (Atom "define" : List (Atom var : params) : body)) =
+     makeNormalFunc env params body >>= defineVar env var
+eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
+     makeVarArgs varargs env params body >>= defineVar env var
+eval env (List (Atom "lambda" : List params : body)) =
+     makeNormalFunc env params body
+eval env (List (Atom "lambda" : DottedList params varargs : body)) =
+     makeVarArgs varargs env params body
+eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
+     makeVarArgs varargs env [] body
+eval env (List [Atom "define", Atom var, form]) =
+     eval env form >>= defineVar env var
+eval env (List (function : args)) = do
+     func <- eval env function
+     argVals <- mapM (eval env) args
+     apply func argVals
 -- Since this is the last pattern it will only match if all other pattern failed which means that we parsed invalid lisp code
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
-apply :: String -> [LispVal] -> ThrowsError LispVal
-apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
-                        --operator section of the function application operator.
-                        --applies func to args if func is not Nothing
-                        ($ args) 
-                        (lookup func primitives)
+
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map makePrimitiveFunc primitives)
+     where makePrimitiveFunc (var, func) = (var, PrimitiveFunc func)
+
+
+makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
+makeNormalFunc = makeFunc Nothing
+makeVarArgs = makeFunc . Just . showVal
+
+apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (Func params varargs body closure) args =
+      if num params /= num args && varargs == Nothing
+         then throwError $ NumArgs (num params) args
+         else (liftIO $ bindVars closure $ zip params args) >>= bindVarArgs varargs >>= evalBody
+      where remainingArgs = drop (length params) args
+            num = toInteger . length
+            evalBody env = liftM last $ mapM (eval env) body
+            bindVarArgs arg env = case arg of
+                Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
+                Nothing -> return env
 
 -- Map of all primitive functions
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
