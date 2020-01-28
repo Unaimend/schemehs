@@ -29,17 +29,25 @@ type ThrowsError a = Either LispError a
 type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError a = ExceptT LispError IO a
 data LispVal = Atom String
-             | List [LispVal]
-             | DottedList [LispVal] LispVal
-             | Vector [LispVal]
              | Number Integer -- Stores a Haskell Integer
              | String String -- Stores a Haskell String
              | Bool Bool  -- Stores a Haskell Boolean
+             | List [LispVal]
+             | DottedList [LispVal] LispVal
+             | Vector [LispVal]
              | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
              | Func { params :: [String], vararg :: (Maybe String),
                       body :: [LispVal], closure :: Env }
 instance Show LispVal where show = showVal
+instance Eq LispVal where (==) = equalVal
 
+equalVal :: LispVal -> LispVal -> Bool
+equalVal (Atom a) (Atom b) = a == b
+equalVal (Number a) (Number b) = a == b
+equalVal (String a) (String b) = a == b
+equalVal (Bool a) (Bool b) = a == b
+equalVal (List l) (List r) = l == r
+equalVal _ _ = error "Not defined"
 
 -- Recognizes if a character is a valid scheme symbol
 symbol :: Parser Char
@@ -49,14 +57,24 @@ symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 spaces1 :: Parser ()
 spaces1 = skipMany1 space
 
+escapedChars :: Parser Char
+escapedChars = do
+  _ <- char '\\'
+  x <- oneOf "\"tn\\"
+  case x of
+    't' -> return '\t'
+    'n' -> return '\n'
+    'r' -> return '\r'
+    '\\' -> return '\\'
+    _ -> return x
 
 -- Parses a string which starts with a " and ends with a"
--- TODO \\t \\n \\r \\ \" 
+-- TODO \\t \\n \\r \\ \"
 parseString :: Parser LispVal
 parseString = do
   _ <- char '"' --Starts with a "
   -- Stops at "
-  x <- many $ noneOf("\"")
+  x <- many $ escapedChars <|> noneOf("\"")
   _ <- char '"' --ends with a "
   return $ String x
 
