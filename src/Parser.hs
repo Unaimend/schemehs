@@ -1,9 +1,13 @@
 module Parser where
 
 import Text.ParserCombinators.Parsec hiding (spaces)
+
 import Control.Monad
 import Data.IORef
 import Control.Monad.Except
+import Data.Complex
+import Data.Ratio
+import System.IO
 -- Represents our AST, since in Scheme everything is a Val, we don't need a seperate tree representation
 --TODO Char, Float, Full-numeric tower
 --TODO backquote, vector
@@ -30,6 +34,9 @@ type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError a = ExceptT LispError IO a
 data LispVal = Atom String
              | Number Integer -- Stores a Haskell Integer
+             | Complex (Complex Double)
+             | Real Double
+             | Rational Rational
              | String String -- Stores a Haskell String
              | Bool Bool  -- Stores a Haskell Boolean
              | List [LispVal]
@@ -38,9 +45,13 @@ data LispVal = Atom String
              | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
              | Func { params :: [String], vararg :: (Maybe String),
                       body :: [LispVal], closure :: Env }
-instance Show LispVal where show = showVal
-instance Eq LispVal where (==) = equalVal
+             | IOFunc ([LispVal] -> IOThrowsError LispVal)
+             | Port Handle
 
+
+instance Show LispVal where show = showVal
+
+instance Eq LispVal where (==) = equalVal
 equalVal :: LispVal -> LispVal -> Bool
 equalVal (Atom a) (Atom b) = a == b
 equalVal (Number a) (Number b) = a == b
@@ -48,6 +59,7 @@ equalVal (String a) (String b) = a == b
 equalVal (Bool a) (Bool b) = a == b
 equalVal (List l) (List r) = l == r
 equalVal _ _ = error "Not defined"
+
 
 -- Recognizes if a character is a valid scheme symbol
 symbol :: Parser Char
@@ -91,7 +103,38 @@ parseAtom = do
                --"#"  -> parseVector
                _    -> return $ Atom atom
 
---TODO Support octal and hexadecimal notation
+{-TODO Support
+6.2.4
+Radix prefixes
+binary:     #b
+octal:      #o
+decimal     #d
+hexadecimal #x
+
+Exactness prefixes
+May appear before or after any radix prefix. If a number has no prefix it may be exact or inexact.
+it is inexact if the number contains a decimal point, an exponent or and TODO(WTF) # character otherwise it is exact
+exact       #e
+inexact     #i
+This this scheme interp. does not support different precisions the s(hort), d(ouble), f(loat), l(ong) postfixes are not support
+e(xponent) is supported
+
+procedure:  (number? obj)
+procedure:  (complex? obj)
+procedure:  (real? obj)
+procedure:  (rational? obj)
+procedure:  (integer? obj)
+
+procedure:  (exact? z)
+procedure:  (inexact? z)
+
+procedure:  (= z1 z2 z3 ...)
+procedure:  (< x1 x2 x3 ...)
+procedure:  (> x1 x2 x3 ...)
+procedure:  (<= x1 x2 x3 ...)
+procedure:  (>= x1 x2 x3 ...)
+
+-}
 parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit
 
@@ -148,6 +191,8 @@ showVal (Func {params = args, vararg = varargs, body = body, closure = env}) =
       (case varargs of
          Nothing -> ""
          Just arg -> " . " ++ arg) ++ ") ...)"
+showVal (Port _)   = "<IO port>"
+showVal (IOFunc _) = "<IO primitive>"
 
 -- creates a string from an array of LispVals, it inserts space characters between original strings
 unwordsList :: [LispVal] -> String
