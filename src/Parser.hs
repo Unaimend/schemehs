@@ -103,38 +103,6 @@ parseAtom = do
                --"#"  -> parseVector
                _    -> return $ Atom atom
 
-{-TODO Support
-6.2.4
-Radix prefixes
-binary:     #b
-octal:      #o
-decimal     #d
-hexadecimal #x
-
-Exactness prefixes
-May appear before or after any radix prefix. If a number has no prefix it may be exact or inexact.
-it is inexact if the number contains a decimal point, an exponent or and TODO(WTF) # character otherwise it is exact
-exact       #e
-inexact     #i
-This this scheme interp. does not support different precisions the s(hort), d(ouble), f(loat), l(ong) postfixes are not support
-e(xponent) is supported
-
-procedure:  (number? obj)
-procedure:  (complex? obj)
-procedure:  (real? obj)
-procedure:  (rational? obj)
-procedure:  (integer? obj)
-
-procedure:  (exact? z)
-procedure:  (inexact? z)
-
-procedure:  (= z1 z2 z3 ...)
-procedure:  (< x1 x2 x3 ...)
-procedure:  (> x1 x2 x3 ...)
-procedure:  (<= x1 x2 x3 ...)
-procedure:  (>= x1 x2 x3 ...)
-
--}
 parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit
 
