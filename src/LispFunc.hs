@@ -28,8 +28,12 @@ boolean (Bool _ : [] ) = return $ Bool True
 boolean (Bool _ : tail') = return $ Bool (unpackBool' (boolean tail'))
 boolean _ = return $ Bool False
 
+---------------------------------------NUMBER FUNCTIONS---------------------------------------------
+number :: [LispVal] -> ThrowsError LispVal
+number (Number _ : []) = return $ Bool True
+number (Number _ : xs) = return $ Bool $ unpackBool' $ number xs
+number _               = return $ Bool False
 
-  
 string :: [LispVal] -> ThrowsError LispVal
 string (String _ : []) = return $ Bool True
 string (String _ : tail') = return $ Bool (unpackBool' (string tail'))
@@ -143,7 +147,6 @@ primitives = [("+", numericBinop (+)),
               ("modulo", numericBinop mod),
               ("quotient", numericBinop quot),
               ("remainder", numericBinop rem),
-              ("number?", numericBinop undefined),
               ("car", car),
               ("cdr", cdr),
               ("cons", cons),
@@ -161,7 +164,7 @@ primitives = [("+", numericBinop (+)),
               --("negative?", numericBinop rem),
               --("odd?", numericBinop rem),
               --("even?", numericBinop rem),
-              --("number?", numericBinop rem),
+              ("number?", number),
               ("boolean?", boolean),
               ("list?", numericBinop (+)),
               --("pair?", numericBinop (+)),
