@@ -5,12 +5,21 @@ import System.Environment
 import Control.Monad
 import System.IO
 import LispData
+import System.Console.Readline
+
 
 flushStr :: String -> IO ()
 flushStr str = putStr str >> hFlush stdout
 
 readPrompt :: String -> IO String
-readPrompt prompt = flushStr prompt >> getLine
+readPrompt prompt = do
+    flushStr prompt
+    maybeLine <- readline "Lisp>>>"
+    case maybeLine of
+      Nothing     -> return "" -- EOF / control-d
+      Just "exit" -> return ""
+      Just line -> do addHistory line
+                      return line
 
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr =  evalString env expr >>= putStrLn
@@ -19,7 +28,7 @@ evalString :: Env -> String -> IO String
 evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>= eval env
 
 runRepl :: IO ()
-runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "Lisp>>> ") . evalAndPrint
+runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "") . evalAndPrint
 
 runOne :: [String] -> IO ()
 runOne args = do

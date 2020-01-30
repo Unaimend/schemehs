@@ -25,6 +25,7 @@ dependencies:
 - mtl == 2.2.2
 - HUnit == 1.6.0.0
 - haskeline
+- readline == 1.0.3.0
 library:
   source-dirs: src
 
