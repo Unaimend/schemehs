@@ -49,8 +49,8 @@ parseAtom = do
                --"#"  -> parseVector
                _    -> return $ Atom atom
 
-parseNumber :: Parser LispVal
-parseNumber = liftM (Number . read) $ many1 digit
+parseInteger :: Parser LispVal
+parseInteger = liftM (Integer . read) $ many1 digit
 
 parseVector :: Parser LispVal
 parseVector = do
@@ -81,7 +81,7 @@ parseQuoted = do
 parseExpr :: Parser LispVal
 parseExpr = parseAtom --first try to parse a atom
          <|> parseString -- if this fails try to parse a string
-         <|> parseNumber -- etc
+         <|> parseInteger -- etc
          <|> parseQuoted
          <|> do _ <- char '('
                 -- parses a normal list until it encounter a dot, at which point it will go back and sstart to parse

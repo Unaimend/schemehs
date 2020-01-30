@@ -29,10 +29,10 @@ boolean (Bool _ : tail') = return $ Bool (unpackBool' (boolean tail'))
 boolean _ = return $ Bool False
 
 ---------------------------------------NUMBER FUNCTIONS---------------------------------------------
-number :: [LispVal] -> ThrowsError LispVal
-number (Number _ : []) = return $ Bool True
-number (Number _ : xs) = return $ Bool $ unpackBool' $ number xs
-number _               = return $ Bool False
+integer :: [LispVal] -> ThrowsError LispVal
+integer (Integer _ : []) = return $ Bool True
+integer (Integer _ : xs) = return $ Bool $ unpackBool' $ integer xs
+integer _               = return $ Bool False
 
 string :: [LispVal] -> ThrowsError LispVal
 string (String _ : []) = return $ Bool True
@@ -57,7 +57,7 @@ numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError Lisp
 numericBinop op           []  = throwError $ NumArgs 2 [] 
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 -- "cast" to number and apply the operator
-numericBinop op params        = mapM unpackNum params >>= return . Number . foldl1 op 
+numericBinop op params        = mapM unpackNum params >>= return . Integer . foldl1 op 
 
 -- applies the correct unpacker for the two arguments of a boolean binary operation
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
@@ -70,7 +70,7 @@ boolBinop unpacker op args = if length args /= 2 -- must provide exactly two arg
 -- conversion functions from lisp vals to haskell val
 unpackStr :: LispVal -> ThrowsError String
 unpackStr (String s) = return s
-unpackStr (Number s) = return $ show s --Type casting(weak typing)
+unpackStr (Integer s) = return $ show s --Type casting(weak typing)
 unpackStr (Bool s)   = return $ show s --Type casting(weak typing)
 unpackStr notString  = throwError $ TypeMismatch "string" notString
 
@@ -79,7 +79,7 @@ unpackBool (Bool b) = return b
 unpackBool notBool  = throwError $ TypeMismatch "boolean" notBool
 
 unpackNum :: LispVal -> ThrowsError Integer
-unpackNum (Number n) = return n
+unpackNum (Integer n) = return n
 -- if the val is a string try to convert it to a number(weak typing)
 unpackNum (String n) = let parsed = reads n in 
                            if null parsed 
@@ -104,7 +104,7 @@ cons badArgList = throwError $ NumArgs 2 badArgList
 
 eqv :: [LispVal] -> ThrowsError LispVal
 eqv [(Bool arg1), (Bool arg2)]             = return $ Bool $ arg1 == arg2
-eqv [(Number arg1), (Number arg2)]         = return $ Bool $ arg1 == arg2
+eqv [(Integer arg1), (Integer arg2)]         = return $ Bool $ arg1 == arg2
 eqv [(String arg1), (String arg2)]         = return $ Bool $ arg1 == arg2
 eqv [(Atom arg1), (Atom arg2)]             = return $ Bool $ arg1 == arg2
 eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
@@ -164,7 +164,7 @@ primitives = [("+", numericBinop (+)),
               --("negative?", numericBinop rem),
               --("odd?", numericBinop rem),
               --("even?", numericBinop rem),
-              ("number?", number),
+              ("integer?", integer),
               ("boolean?", boolean),
               ("list?", numericBinop (+)),
               --("pair?", numericBinop (+)),

@@ -13,7 +13,7 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 --TODO Char, Float, Full-numeric tower
 --TODO backquote, vector
 data LispVal = Atom String
-             | Number Integer -- Stores a Haskell Integer
+             | Integer Integer -- Stores a Haskell Integer
              | Complex (Complex Double)
              | Real Double
              | Rational Rational
@@ -50,7 +50,7 @@ type IOThrowsError a = ExceptT LispError IO a --TODO Understand ExceptT
 
 equalVal :: LispVal -> LispVal -> Bool
 equalVal (Atom a) (Atom b) = a == b
-equalVal (Number a) (Number b) = a == b
+equalVal (Integer a) (Integer b) = a == b
 equalVal (String a) (String b) = a == b
 equalVal (Bool a) (Bool b) = a == b
 equalVal (List l) (List r) = l == r
@@ -59,7 +59,7 @@ equalVal _ _ = error "Not defined"
 showVal :: LispVal -> String
 showVal (String contents) = "\"" ++ contents ++ "\""
 showVal (Atom name) = name
-showVal (Number contents) = show contents
+showVal (Integer contents) = show contents
 showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
