@@ -23,6 +23,9 @@ dependencies:
 - base >= 4.7 && < 5
 - parsec
 - mtl == 2.2.2
+- HUnit == 1.6.0.0
+- haskeline
+- readline == 1.0.3.0
 library:
   source-dirs: src
 
@@ -49,3 +52,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - schemehs
+    - HUnit == 1.6.0.0

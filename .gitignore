@@ -1,3 +1,6 @@
 .stack-work/
 schemehs.cabal
 *~
+src/\.#Parser\.hs
+
+src/\.#Util\.hs
