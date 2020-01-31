@@ -4,6 +4,7 @@ module LispFunc where
 import Control.Monad.Except --throwError
 
 import LispData
+import Debug.Trace
 
 -- implements the lisp car(head) function
 car :: [LispVal] -> ThrowsError LispVal
@@ -54,10 +55,17 @@ symbol' ( val : tail') = case val of
                            otherwise -> return $ Bool False
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
-numericBinop op           []  = throwError $ NumArgs 2 [] 
+numericBinop op           []  = throwError $ NumArgs 2 []
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 -- "cast" to number and apply the operator
-numericBinop op params        = mapM unpackNum params >>= return . Integer . foldl1 op 
+numericBinop op params        = mapM unpackNum params >>= return . Integer . foldl1 op
+
+
+minus :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+minus op           []  = throwError $ NumArgs 2 []
+minus op (x:[]) =  (return . Integer) =<< (fmap negate (unpackNum x))
+-- "cast" to number and apply the operator
+minus op params        = mapM unpackNum params >>= return . Integer . foldl1 op
 
 -- applies the correct unpacker for the two arguments of a boolean binary operation
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
@@ -141,7 +149,7 @@ equal badArgList = throwError $ NumArgs 2 badArgList
 -- Map of all primitive functions
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
-              ("-", numericBinop (-)),
+              ("-", minus (-)),
               ("*", numericBinop (*)),
               ("/", numericBinop div),
               ("modulo", numericBinop mod),
