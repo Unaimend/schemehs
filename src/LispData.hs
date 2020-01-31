@@ -13,12 +13,9 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 --TODO Char, Float, Full-numeric tower
 --TODO backquote, vector
 data LispVal = Atom String
-             | Integer Integer -- Stores a Haskell Integer
-             | Complex (Complex Double)
-             | Real Double
-             | Rational Rational
              | String String -- Stores a Haskell String
              | Bool Bool  -- Stores a Haskell Boolean
+             | LispNumber LispNumber
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Vector [LispVal]
@@ -28,6 +25,10 @@ data LispVal = Atom String
              | IOFunc ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
 
+data LispNumber = Integer Integer -- Stores a Haskell Integer
+                | Real Double
+                | Rational Rational
+                | Complex (Complex Double) deriving(Eq)
 
 -- Type which represents all possible errors
 data LispError = NumArgs Integer [LispVal]
@@ -41,6 +42,7 @@ data LispError = NumArgs Integer [LispVal]
 instance Show LispVal where show = showVal
 instance Eq LispVal where (==) = equalVal
 instance Show LispError where show = showError
+instance Show LispNumber where show = showNumber
 
 --Type alias because all our function now return ThrowsError because they either throw or return valid data
 type ThrowsError a = Either LispError a
@@ -50,7 +52,7 @@ type IOThrowsError a = ExceptT LispError IO a --TODO Understand ExceptT
 
 equalVal :: LispVal -> LispVal -> Bool
 equalVal (Atom a) (Atom b) = a == b
-equalVal (Integer a) (Integer b) = a == b
+equalVal (LispNumber a) (LispNumber b) = a == b
 equalVal (String a) (String b) = a == b
 equalVal (Bool a) (Bool b) = a == b
 equalVal (List l) (List r) = l == r
@@ -59,7 +61,7 @@ equalVal _ _ = error "Not defined"
 showVal :: LispVal -> String
 showVal (String contents) = "\"" ++ contents ++ "\""
 showVal (Atom name) = name
-showVal (Integer contents) = show contents
+showVal (LispNumber contents) = show contents
 showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
@@ -85,6 +87,11 @@ showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
                                        ++ ", found " ++ show found
 showError (Parser parseErr)             = "Parse error at " ++ show parseErr
 
+showNumber :: LispNumber -> String
+showNumber ((Integer a))  = show a
+showNumber ((Complex a))  = show a
+showNumber ((Rational a)) = show a
+showNumber ((Real a))     = show a
 
 -- TODO Raff ich immer noch nich ganz
 trapError action = catchError action (return . show)

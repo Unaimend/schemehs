@@ -24,11 +24,11 @@ eqT p s v = s ~: ((parseTest p s)) ~?= v
 string = test [("parse \"test\"" ~: ((parse parseString "" "\"test\"")) ~?= (Right (String "test")))
              ]
 
-integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (Integer 123)),
-               eqT parseInteger "100" (Integer 100),
-               eqT parseInteger "(- 100)" (Integer  (-100)),
+integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (LispNumber (Integer 123))),
+               eqT parseInteger "100" (LispNumber $ Integer $ 100),
+               eqT parseInteger "(- 100)" (LispNumber $ Integer $  (-100)),
                --eqT parseInteger "(-100)" (Integer  (-100)) this one should fail 
-               eqT parseInteger "-100" (Integer  (-100))
+               eqT parseInteger "-100" (LispNumber $ Integer $ (-100))
              ]
 
 testInter ::  String -> String -> IO Test

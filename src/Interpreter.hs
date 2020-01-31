@@ -63,7 +63,10 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
 eval :: Env -> LispVal -> IOThrowsError LispVal
 -- Lift values into ThrowError LispVal because they evaluate to themselves
 eval env val@(String _) = return val
-eval env val@(Integer _) = return val
+eval env val@(LispNumber (Integer _)) = return val
+eval env val@(LispNumber (Real _)) = return val
+eval env val@(LispNumber (Complex _)) = return val
+eval env val@(LispNumber (Rational _)) = return val
 eval env val@(Bool _) = return val
 eval env (Atom id) = getVar env id
 -- a quoted list should be taken as a literal, without evaluating its content

@@ -54,10 +54,10 @@ parseInteger = choice [parseNeg, parsePos]
 
 parseNeg = do sign <- char '-'
               int <- many1 digit
-              return $ (Integer . read) int
+              return $ (LispNumber . Integer . read) int
 
 parsePos = do int <- many1 digit
-              return $ (Integer . read) int
+              return $ (LispNumber . Integer . read) int
 
 parseVector :: Parser LispVal
 parseVector = do
