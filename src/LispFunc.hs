@@ -75,6 +75,22 @@ boolBinop unpacker op args = if length args /= 2 -- must provide exactly two arg
                                      right <- unpacker $ args !! 1 --unpack 2nd arg
                                      return $ Bool $ left `op` right --apply operation
 
+
+-- applies the correct unpacker for the two arguments of a boolean binary operation
+{-boolNop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
+boolNop unpacker op (x:[])= return $ x
+boolNop unpacker op (x:y:[])= do left <- unpacker $ x
+                                 right <- unpacker $ y
+                                 return $ Bool $ left `op` right
+boolNop unpacker op (x:y:xs)= do rest <- (boolNop unpacker op xs)
+                                 rest' <-  (trace $ "test" ++ show rest) (unpacker rest)
+                                 left <-   (unpacker x)
+                                 right <- unpacker y
+                                 if left `op` right then
+                                   return $ Bool $ left  `op` rest'
+                                 else
+                                   return $ Bool $ False-}
+
 -- conversion functions from lisp vals to haskell val
 unpackStr :: LispVal -> ThrowsError String
 unpackStr (String s) = return s
@@ -89,14 +105,15 @@ unpackBool notBool  = throwError $ TypeMismatch "boolean" notBool
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Integer n) = return n
 -- if the val is a string try to convert it to a number(weak typing)
-unpackNum (String n) = let parsed = reads n in 
-                           if null parsed 
+unpackNum (String n) = let parsed = reads n in
+                           if null parsed
                              then throwError $ TypeMismatch "number" $ String n
                              else return $ fst $ parsed !! 0
 -- singleton list can be converted to numbers, if the val in the list is convertible to number
 unpackNum (List [n]) = unpackNum n
 unpackNum notNum     = throwError $ TypeMismatch "number" notNum
 
+--numBoolNop  = boolNop unpackNum
 numBoolBinop  = boolBinop unpackNum
 strBoolBinop  = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
@@ -138,7 +155,7 @@ unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
 -- ignores type tags, e.g. equal? 2 "2" = #t but eqv? 2 "2" = #f
 equal :: [LispVal] -> ThrowsError LispVal
 equal [arg1, arg2] = do
-      primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2) 
+      primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
                          [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
       eqvEquals <- eqv [arg1, arg2]
       return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
