@@ -24,25 +24,33 @@ eqT p s v = s ~: ((parseTest p s)) ~?= v
 string = test [("parse \"test\"" ~: ((parse parseString "" "\"test\"")) ~?= (Right (String "test")))
              ]
 
-numberParse = test [("parse \"123\"" ~: ((parseTest parseNumber "123")) ~?= (Number 123)),
-               eqT parseNumber "100" (Number 100),
-               eqT parseNumber "(-100)" (Number  (-100))
+integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (Integer 123)),
+               eqT parseInteger "100" (Integer 100),
+               eqT parseInteger "(- 100)" (Integer  (-100)),
+               --eqT parseInteger "(-100)" (Integer  (-100)) this one should fail 
+               eqT parseInteger "-100" (Integer  (-100))
              ]
 
 testInter ::  String -> String -> IO Test
 testInter x s = ( ~=? x) <$> (interp s)
 
-numberInterp = [ testInter "3" "(+ 0 3)",
+integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "3" "(+ 3 0)",
                  testInter "6" "(+ 3 3)",
                  testInter "0" "(- 3 3)",
-                 testInter "#t" "(number? 3)",
-                 testInter "#t" "(number? 0)",
-                 testInter "#f" "(number? \"3\")",
-                 testInter "#f" "(number? \'())",
-                 testInter "#f" "(number? \"TestString\")"
+                 testInter "0" "(+ 3 (- 3))",
+                 testInter "-3" "(+ 0 (- 3))",
+                 testInter "3" "(+ 3 (- 0))",
+                 testInter "#t" "(integer? 3)",
+                 testInter "#t" "(integer? 3)",
+                 testInter "#t" "(integer? 0)",
+                 testInter "#f" "(integer? \"3\")",
+                 testInter "#f" "(integer? \'())",
+                 testInter "#f" "(integer? \"TestString\")",
+                 testInter "#f" "(integer? (define (x) (+ x x)))"
+
                ]
 
 main :: IO (Counts)
-main =do runTestTT numberParse
-         test <$> sequenceA numberInterp >>= runTestTT
+main =do runTestTT integerParse
+         test <$> sequenceA integerInterp >>= runTestTT

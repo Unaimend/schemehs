@@ -3,7 +3,7 @@ module Parser where
 import Control.Monad
 
 import Text.ParserCombinators.Parsec hiding (spaces)
-
+import Debug.Trace
 import LispData
 --TODO Learn monads again and check what mapM is doing
 
@@ -41,16 +41,23 @@ parseAtom :: Parser LispVal
 parseAtom = do
   first <- letter <|> symbol --First char must be a letter or a sybmol
   --the following chars must be one of letter, digit or symbol
-  rest <- many (letter <|> digit <|> symbol) 
+  rest <- {-trace  (show first)-} (many (letter <|> digit <|> symbol))
   let atom = first:rest
   --catch special atoms
   case atom of "#t" -> return $ Bool True
                "#f" -> return $ Bool True
-               --"#"  -> parseVector
-               _    -> return $ Atom atom
+               --('-':xs)   -> trace ("-"++ show atom) (return $ Atom atom)
+               _    -> {-trace ("attom"++ show atom)-} (return $ Atom atom)
 
 parseInteger :: Parser LispVal
-parseInteger = liftM (Integer . read) $ many1 digit
+parseInteger = choice [parseNeg, parsePos]
+
+parseNeg = do sign <- char '-'
+              int <- many1 digit
+              return $ (Integer . read) int
+
+parsePos = do int <- many1 digit
+              return $ (Integer . read) int
 
 parseVector :: Parser LispVal
 parseVector = do
