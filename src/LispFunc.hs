@@ -112,6 +112,9 @@ even' :: [LispVal] -> ThrowsError LispVal
 even' (n:[]) = (unpackInt n) >>= (return . Bool . even)
 even' (n:xs) =  throwError $ NumArgs 2 (n:xs)
 
+odd' :: [LispVal] -> ThrowsError LispVal
+odd' (n:[]) = (unpackInt n) >>= (return . Bool . not . even)
+odd' (n:xs) =  throwError $ NumArgs 2 (n:xs)
 -- applies the correct unpacker for the two arguments of a boolean binary operation
 {-boolNop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolNop unpacker op (x:[])= return $ x
@@ -239,6 +242,7 @@ primitives = [("+", numericBinop (+)),
               ("number?", number),
               ("integer?", integer),
               ("even?", even'),
+              ("odd?", odd'),
               ("rational?", rational),
               ("real?", real),
               ("complex?", complex),
