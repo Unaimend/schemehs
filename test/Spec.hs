@@ -32,7 +32,7 @@ integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (L
              ]
 
 testInter ::  String -> String -> IO Test
-testInter x s = ( ~=? x) <$> (interp s)
+testInter x s = (s ~:) <$> (( ~=? x) <$> (interp s))
 
 integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "3" "(+ 3 0)",
