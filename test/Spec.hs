@@ -41,16 +41,39 @@ integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "0" "(+ 3 (- 3))",
                  testInter "-3" "(+ 0 (- 3))",
                  testInter "3" "(+ 3 (- 0))",
+                 --Typetesting functions number
+                 testInter "#t" "(number? 3 3 3)",
+                 testInter "#t" "(number? 3)",
+                 testInter "#t" "(number? 0)",
+                 testInter "#t" "(number? (- 3))",
+                 --Typetesting functions integer
+                 testInter "#t" "(integer? 3 3 3)",
                  testInter "#t" "(integer? 3)",
-                 testInter "#t" "(integer? 3)",
+                 testInter "#t" "(integer? (- 3))",
                  testInter "#t" "(integer? 0)",
                  testInter "#f" "(integer? \"3\")",
                  testInter "#f" "(integer? \'())",
                  testInter "#f" "(integer? \"TestString\")",
-                 testInter "#f" "(integer? (define (x) (+ x x)))"
-
+                 testInter "#f" "(integer? (define (x) (+ x x)))",
+                 --Typetesting functions rational
+                 testInter "#t" "(rational? 3 3 3)",
+                 testInter "#t" "(rational? 3)",
+                 testInter "#t" "(rational? 0)",
+                 testInter "#t" "(rational? (- 3))",
+                 --Typetesting functions real
+                 testInter "#t" "(real? 3 3 3)",
+                 testInter "#t" "(real? 3)",
+                 testInter "#t" "(real? 0)",
+                 testInter "#t" "(real? (- 3))",
+                 --Typetesting functions complex
+                 testInter "#f" "(complex? 3 3 )",
+                 testInter "#t" "(complex? 3 3 3)",
+                 testInter "#t" "(complex? 3)",
+                 testInter "#t" "(complex? 0)",
+                 testInter "#t" "(complex? (- 3))"
                ]
 
+--stdLibTest = []
 main :: IO (Counts)
 main =do runTestTT integerParse
          test <$> sequenceA integerInterp >>= runTestTT
