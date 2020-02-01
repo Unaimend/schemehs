@@ -5,11 +5,8 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import LispFunc
 import LispData
 import Parser
-
 import Data.IORef
 import Control.Monad.Except
-import System.Environment
-import Control.Monad
 import System.IO
 
 
@@ -62,17 +59,17 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
 -- Lift values into ThrowError LispVal because they evaluate to themselves
-eval env val@(String _) = return val
-eval env val@(LispNumber (Integer _)) = return val
-eval env val@(LispNumber (Real _)) = return val
-eval env val@(LispNumber (Complex _)) = return val
-eval env val@(LispNumber (Rational _)) = return val
-eval env val@(Bool _) = return val
-eval env (Atom id) = getVar env id
+eval _ val@(String _) = return val
+eval _ val@(LispNumber (Integer _)) = return val
+eval _ val@(LispNumber (Real _)) = return val
+eval _ val@(LispNumber (Complex _)) = return val
+eval _ val@(LispNumber (Rational _)) = return val
+eval _ val@(Bool _) = return val
+eval env (Atom at) =  getVar env at
 -- a quoted list should be taken as a literal, without evaluating its content
 eval env (List [Atom "set!", Atom var, form]) =
      eval env form >>= setVar env var
-eval env (List [Atom "quote", val]) = return val
+eval _ (List [Atom "quote", val]) = return val
 -- Since everythin in lisp starts with a (, everything will be parsed as list with content
 -- so we test against a List with sth. inside
 eval env (List [Atom "if", pred, conseq, alt]) =
@@ -82,7 +79,7 @@ eval env (List [Atom "if", pred, conseq, alt]) =
           --evaluate else
              Bool False -> eval env alt
              --evaluate then
-             otherwise  -> eval env conseq
+             _ -> eval env conseq
 -- applies func to all evaluated args
 -- TODO Imlement different evaluation orders
 eval env (List (Atom "define" : List (Atom var : params) : body)) =
@@ -111,9 +108,16 @@ primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= (flip bindVars $ map makePrimitiveFunc primitives)
      where makePrimitiveFunc (var, func) = (var, PrimitiveFunc func)
 
-
+makeFunc :: Monad m =>
+                  Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
+
+makeNormalFunc :: Env
+               -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeNormalFunc = makeFunc Nothing
+
+makeVarArgs :: LispVal
+            -> Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeVarArgs = makeFunc . Just . showVal
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
@@ -176,5 +180,8 @@ readOrThrow parser input = case parse parser "lisp" input of
     Left err  -> throwError $ Parser err
     Right val -> return val
 
+readExpr :: String -> ThrowsError LispVal
 readExpr = readOrThrow parseExpr
+
+readExprList :: String -> ThrowsError [LispVal]
 readExprList = readOrThrow (endBy parseExpr spaces)
