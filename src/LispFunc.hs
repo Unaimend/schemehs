@@ -30,10 +30,43 @@ boolean (Bool _ : tail') = return $ Bool (unpackBool' (boolean tail'))
 boolean _ = return $ Bool False
 
 ---------------------------------------NUMBER FUNCTIONS---------------------------------------------
+number :: [LispVal] -> ThrowsError LispVal
+number (LispNumber _ : []) = return $ Bool True
+number (LispNumber _ : xs) = return $ Bool $ unpackBool' $ number xs
+number _ = return $ Bool False
+
 integer :: [LispVal] -> ThrowsError LispVal
 integer (LispNumber (Integer _) : []) = return $ Bool True
 integer (LispNumber (Integer _) : xs) = return $ Bool $ unpackBool' $ integer xs
-integer _               = return $ Bool False
+integer _                             = return $ Bool False
+
+rational :: [LispVal] -> ThrowsError LispVal
+rational (LispNumber (Integer _) : [])  = return $ Bool True
+rational (LispNumber (Integer _) : xs)  = return $ Bool $ unpackBool' $ rational xs
+rational (LispNumber (Rational _) : []) = return $ Bool True
+rational (LispNumber (Rational _) : xs) = return $ Bool $ unpackBool' $ rational xs
+rational _                              = return $ Bool False
+
+
+real :: [LispVal] -> ThrowsError LispVal
+real (LispNumber (Integer _) : [])  = return $ Bool True
+real (LispNumber (Integer _) : xs)  = return $ Bool $ unpackBool' $ real xs
+real (LispNumber (Rational _) : []) = return $ Bool True
+real (LispNumber (Rational _) : xs) = return $ Bool $ unpackBool' $ real xs
+real (LispNumber (Real _) : [])     = return $ Bool True
+real (LispNumber (Real _) : xs)     = return $ Bool $ unpackBool' $ real xs
+real _                              = return $ Bool False
+
+complex :: [LispVal] -> ThrowsError LispVal
+complex (LispNumber (Integer _) : [])  = return $ Bool True
+complex (LispNumber (Integer _) : xs)  = return $ Bool $ unpackBool' $ complex xs
+complex (LispNumber (Rational _) : []) = return $ Bool True
+complex (LispNumber (Rational _) : xs) = return $ Bool $ unpackBool' $ complex xs
+complex (LispNumber (Real _) : [])     = return $ Bool True
+complex (LispNumber (Real _) : xs)     = return $ Bool $ unpackBool' $ complex xs
+complex (LispNumber (Complex _) : [])  = return $ Bool True
+complex (LispNumber (Complex _) : xs)  = return $ Bool $ unpackBool' $ complex xs
+complex _                              = return $ Bool False
 
 string :: [LispVal] -> ThrowsError LispVal
 string (String _ : []) = return $ Bool True
@@ -189,7 +222,11 @@ primitives = [("+", numericBinop (+)),
               --("negative?", numericBinop rem),
               --("odd?", numericBinop rem),
               --("even?", numericBinop rem),
+              ("number?", number),
               ("integer?", integer),
+              ("rational?", rational),
+              ("real?", real),
+              ("complex?", complex),
               ("boolean?", boolean),
               ("list?", numericBinop (+)),
               --("pair?", numericBinop (+)),
