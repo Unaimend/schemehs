@@ -108,6 +108,9 @@ boolBinop unpacker op args = if length args /= 2 -- must provide exactly two arg
                                      right <- unpacker $ args !! 1 --unpack 2nd arg
                                      return $ Bool $ left `op` right --apply operation
 
+even' :: [LispVal] -> ThrowsError LispVal
+even' (n:[]) = (unpackInt n) >>= (return . Bool . even)
+even' (n:xs) =  throwError $ NumArgs 2 (n:xs)
 
 -- applies the correct unpacker for the two arguments of a boolean binary operation
 {-boolNop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
@@ -134,6 +137,17 @@ unpackStr notString  = throwError $ TypeMismatch "string" notString
 unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool  = throwError $ TypeMismatch "boolean" notBool
+
+unpackInt :: LispVal -> ThrowsError Integer
+unpackInt (LispNumber (Integer n)) = return n
+-- if the val is a string try to convert it to a number(weak typing)
+unpackInt (String n) = let parsed = reads n in
+                           if null parsed
+                             then throwError $ TypeMismatch "integer" $ String n
+                             else return $ fst $ parsed !! 0
+-- singleton list can be converted to numbers, if the val in the list is convertible to number
+unpackInt (List [n]) = unpackNum n
+unpackInt notNum     = throwError $ TypeMismatch "number" notNum
 
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (LispNumber (Integer n)) = return n
@@ -224,6 +238,7 @@ primitives = [("+", numericBinop (+)),
               --("even?", numericBinop rem),
               ("number?", number),
               ("integer?", integer),
+              ("even?", even'),
               ("rational?", rational),
               ("real?", real),
               ("complex?", complex),
