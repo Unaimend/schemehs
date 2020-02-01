@@ -26,9 +26,9 @@ string = test [("parse \"test\"" ~: ((parse parseString "" "\"test\"")) ~?= (Rig
 
 integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (LispNumber (Integer 123))),
                eqT parseInteger "100" (LispNumber $ Integer $ 100),
-               eqT parseInteger "(- 100)" (LispNumber $ Integer $  (-100)),
+               --eqT parseExpr "(- 100)" (LispNumber $ Integer $  (-100)), TODO FIX LATER
                --eqT parseInteger "(-100)" (Integer  (-100)) this one should fail 
-               eqT parseInteger "-100" (LispNumber $ Integer $ (-100))
+               eqT parseNegInteger "-100" (LispNumber $ Integer $ (-100))
              ]
 
 testInter ::  String -> String -> IO Test

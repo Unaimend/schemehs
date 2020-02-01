@@ -39,28 +39,28 @@ parseString = do
 -- Parses a symbol
 parseAtom :: Parser LispVal
 parseAtom = do
-  first <- letter <|> symbol --First char must be a letter or a sybmol
+  first <- (letter <|> symbol) --First char must be a letter or a sybmol
   --the following chars must be one of letter, digit or symbol
-  rest <- {-trace  (show first)-} (many (letter <|> digit <|> symbol))
+  rest <-  (many (letter <|> digit <|> symbol))
   let atom = first:rest
   --catch special atoms
   case atom of "#t" -> return $ Bool True
                "#f" -> return $ Bool False
                ('-':x:xs)   -> case x of
-                   ' ' -> (return $ Atom atom)
-                   _ -> return $ (LispNumber . Integer . read) atom
+                   ' ' -> return $ Atom atom
+                   _   -> return $ (LispNumber . Integer . read) atom --TODO THIS IS NOT GOOD, try to parse -3o
                _    -> {-trace ("attom"++ show atom)-} (return $ Atom atom)
 
 parseInteger :: Parser LispVal
-parseInteger = choice [parseNeg, parsePos]
+parseInteger =  do
+  int <- many1 digit
+  return $ (LispNumber . Integer . read) int
 
-parseNeg = do sign <- char '-'
-              int <- many1 digit
-              return $ (LispNumber . Integer . read) int
-
-parsePos = do int <- many1 digit
-              return $ (LispNumber . Integer . read) int
-
+parseNegInteger :: Parser LispVal
+parseNegInteger =  do
+  _ <-  (char '-')
+  int <- many1 digit
+  return $ (LispNumber . Integer . negate . read) int
 
 parseVector :: Parser LispVal
 parseVector = do
@@ -91,6 +91,7 @@ parseQuoted = do
 parseExpr :: Parser LispVal
 parseExpr = parseAtom --first try to parse a atom
          <|> parseString -- if this fails try to parse a string
+         <|> try parseNegInteger --TODO WENN MIR WAS UM DIE OHREN FLIEGT LIEGTS HIER DRAN
          <|> parseInteger -- etc
          <|> parseQuoted
          <|> do _ <- char '('

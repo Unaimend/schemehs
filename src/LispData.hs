@@ -56,7 +56,6 @@ equalVal (LispNumber a) (LispNumber b) = a == b
 equalVal (String a) (String b) = a == b
 equalVal (Bool a) (Bool b) = a == b
 equalVal (List l) (List r) = l == r
-equalVal _ _ = error "Not defined"
 
 showVal :: LispVal -> String
 showVal (String contents) = "\"" ++ contents ++ "\""

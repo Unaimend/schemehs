@@ -8,7 +8,7 @@ import Parser
 import Data.IORef
 import Control.Monad.Except
 import System.IO
-
+import Debug.Trace
 
 spaces :: Parser ()
 spaces = skipMany1 space
@@ -50,7 +50,7 @@ defineVar envRef var value = do
              env <- readIORef envRef
              writeIORef envRef ((var, valueRef) : env)
              return value
-  
+
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
      where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
@@ -132,7 +132,7 @@ apply (Func params varargs body closure) args =
             bindVarArgs arg env = case arg of
                 Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
                 Nothing -> return env
-
+apply f _ = throwError $ BadSpecialForm "Missing space before functions application" f
 
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
 ioPrimitives = [("apply", applyProc),
