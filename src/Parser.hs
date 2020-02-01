@@ -45,8 +45,10 @@ parseAtom = do
   let atom = first:rest
   --catch special atoms
   case atom of "#t" -> return $ Bool True
-               "#f" -> return $ Bool True
-               --('-':xs)   -> trace ("-"++ show atom) (return $ Atom atom)
+               "#f" -> return $ Bool False
+               ('-':x:xs)   -> case x of
+                   ' ' -> (return $ Atom atom)
+                   _ -> return $ (LispNumber . Integer . read) atom
                _    -> {-trace ("attom"++ show atom)-} (return $ Atom atom)
 
 parseInteger :: Parser LispVal
@@ -58,6 +60,7 @@ parseNeg = do sign <- char '-'
 
 parsePos = do int <- many1 digit
               return $ (LispNumber . Integer . read) int
+
 
 parseVector :: Parser LispVal
 parseVector = do
