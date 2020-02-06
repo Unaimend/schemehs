@@ -94,7 +94,12 @@ testEqv = [testInter "#t" "(eqv? #t #t)",
            testInter "#t" "(eqv? (eqv? 0 0) (= 0 0))",
            testInter "#t" "(eqv? (eqv? 1 1) (= 1 1))",
            testInter "#t" "(eqv? (eqv? -1 -1) (= -1 -1))",
-           testInter "#t" "(eqv? '() '())"
+           testInter "#t" "(eqv? (eqv? 0 1) (= 0 1))",
+           testInter "#t" "(eqv? (eqv? 1 -1) (= 1 -1))",
+           testInter "#t" "(eqv? (eqv? -1 1) (= -1 1))"
+           testInter "#t" "(eqv? '() '())",
+           testInter "#f" "(eqv? #f #t)",
+           testInter "#f" "(eqv? #t #f)",
           ]
 
 --stdLibTest = []
