@@ -89,7 +89,16 @@ integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "#t" "(complex? (- 3))"
                ]
 
+testEqv = [testInter "#t" "(eqv? #t #t)",
+           testInter "#t" "(eqv? #f #f)",
+           testInter "#t" "(eqv? (eqv? 0 0) (= 0 0))",
+           testInter "#t" "(eqv? (eqv? 1 1) (= 1 1))",
+           testInter "#t" "(eqv? (eqv? -1 -1) (= -1 -1))",
+           testInter "#t" "(eqv? '() '())"
+          ]
+
 --stdLibTest = []
 main :: IO (Counts)
 main =do runTestTT integerParse
          test <$> sequenceA integerInterp >>= runTestTT
+         test <$> sequenceA testEqv >>= runTestTT
