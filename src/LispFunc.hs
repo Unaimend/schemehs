@@ -68,6 +68,9 @@ complex (LispNumber (Complex _) : [])  = return $ Bool True
 complex (LispNumber (Complex _) : xs)  = return $ Bool $ unpackBool' $ complex xs
 complex _                              = return $ Bool False
 
+--exact :: [LispNumber] -> ThrowsError LispVal
+--exact (x : []) = (fmap (||) (rational x ) <*> (integer x)
+
 string :: [LispVal] -> ThrowsError LispVal
 string (String _ : []) = return $ Bool True
 string (String _ : tail') = return $ Bool (unpackBool' (string tail'))
