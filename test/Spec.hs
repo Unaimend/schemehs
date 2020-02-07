@@ -37,6 +37,13 @@ testInter x s = (s ~:) <$> (( ~=? x) <$> (interp s))
 integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "3" "(+ 3 0)",
                  testInter "6" "(+ 3 3)",
+                 testInter "9" "(+ 3 3 3)",
+                 testInter "6" "(+ 1 2 3)",
+                 testInter "6" "(* 1 2 3)",
+                 testInter "0" "(* 0 1)",
+                 testInter "0" "(* 1 0)",
+                 testInter "5" "(* 1 5)",
+                 testInter "5" "(* 5 1)",
                  testInter "0" "(- 3 3)",
                  testInter "0" "(+ 3 (- 3))",
                  testInter "-3" "(+ 0 (- 3))",
@@ -96,14 +103,20 @@ testEqv = [testInter "#t" "(eqv? #t #t)",
            testInter "#t" "(eqv? (eqv? -1 -1) (= -1 -1))",
            testInter "#t" "(eqv? (eqv? 0 1) (= 0 1))",
            testInter "#t" "(eqv? (eqv? 1 -1) (= 1 -1))",
-           testInter "#t" "(eqv? (eqv? -1 1) (= -1 1))"
+           testInter "#t" "(eqv? (eqv? -1 1) (= -1 1))",
            testInter "#t" "(eqv? '() '())",
            testInter "#f" "(eqv? #f #t)",
-           testInter "#f" "(eqv? #t #f)",
+           testInter "#f" "(eqv? #t #f)"
           ]
 
+testExact = [testInter "#t" "(exact? 4)",
+             testInter "#t" "(exact? 0)",
+             testInter "#t" "(exact? -4)",
+             testInter "#f" "(exact? #f)"
+            ]
 --stdLibTest = []
 main :: IO (Counts)
 main =do runTestTT integerParse
          test <$> sequenceA integerInterp >>= runTestTT
          test <$> sequenceA testEqv >>= runTestTT
+         test <$> sequenceA testExact >>= runTestTT

@@ -68,8 +68,8 @@ complex (LispNumber (Complex _) : [])  = return $ Bool True
 complex (LispNumber (Complex _) : xs)  = return $ Bool $ unpackBool' $ complex xs
 complex _                              = return $ Bool False
 
---exact :: [LispNumber] -> ThrowsError LispVal
---exact (x : []) = (fmap (||) (rational x ) <*> (integer x)
+exact :: [LispVal] -> ThrowsError LispVal
+exact x = Bool <$> (((||) <$> (join $ unpackBool <$> rational x)) <*> (join $ unpackBool <$> integer x))
 
 string :: [LispVal] -> ThrowsError LispVal
 string (String _ : []) = return $ Bool True
@@ -266,4 +266,5 @@ primitives = [("+", numericBinop (+)),
               ("string<=?", strBoolBinop (<=)),
               ("string>=?", strBoolBinop (>=)),
               ("symbol?", symbol'),
-              ("string?", LispFunc.string)]
+              ("string?", LispFunc.string),
+             ("exact?", exact)]
