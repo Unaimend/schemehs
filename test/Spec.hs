@@ -10,6 +10,7 @@ import Data.Either
 import Data.Ratio
 import LispData
 import FileIO
+import Number
 
 interp x = primitiveBindings >>= flip evalString x
 
@@ -39,7 +40,8 @@ integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (L
 testInter ::  String -> String -> IO Test
 testInter x s = (s ~:) <$> (( ~=? x) <$> (interp s))
 
-integerInterp = [testInter "3" "(+ 0 3)",
+integerInterp = [-- math function integer
+                 testInter "3" "(+ 0 3)",
                  testInter "3" "(+ 3 0)",
                  testInter "6" "(+ 3 3)",
                  testInter "9" "(+ 3 3 3)",
@@ -53,6 +55,12 @@ integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "0" "(+ 3 (- 3))",
                  testInter "-3" "(+ 0 (- 3))",
                  testInter "3" "(+ 3 (- 0))",
+                 -- math function rational
+                 testInter "6/1" "(+ 3/1 3/1)",
+                 testInter "0/1" "(+ 0/1 0/1)",
+                 testInter "1/1" "(* 4/2 1/2)",
+                 testInter "0/1" "(* 0/2 1/2)",
+                 testInter "1/2" "(* 1/1 1/2)",
                  --Typetesting functions number
                  testInter "#t" "(number? 3 3 3)",
                  testInter "#t" "(number? 3)",
@@ -67,7 +75,7 @@ integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "#f" "(integer? \'())",
                  testInter "#f" "(integer? \"TestString\")",
                  testInter "#f" "(integer? (define (x) (+ x x)))",
-                 --eventesting
+                 --even testing
                  testInter "#t" "(even? 2)",
                  testInter "#t" "(even? 0)",
                  testInter "#t" "(even? (- 2))",
@@ -75,7 +83,7 @@ integerInterp = [testInter "3" "(+ 0 3)",
                  testInter "#t" "(even? (- 0))",
                  testInter "#f" "(even? (- 3))",
                  testInter "#t" "(even? \"2\")",
-                 --eventesting
+                 --odd testing
                  testInter "#f" "(odd? 2)",
                  testInter "#f" "(odd? 0)",
                  testInter "#f" "(odd? (- 2))",

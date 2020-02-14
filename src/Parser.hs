@@ -3,9 +3,9 @@ module Parser where
 import Data.Ratio
 import Control.Monad
 
+import Number
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Text.Parsec.Number 
-import Debug.Trace
 import LispData
 --TODO Learn monads again and check what mapM is doing
 
@@ -48,7 +48,7 @@ parseAtom = do
   --catch special atoms
   case atom of "#t" -> return $ Bool True
                "#f" -> return $ Bool False
-               ('-':x:xs)   -> case x of
+               ('-':x:_)   -> case x of
                    ' ' -> return $ Atom atom
                    _   -> return $ (LispNumber . Integer . read) atom --TODO THIS IS NOT GOOD, try to parse -3o
                _    -> {-trace ("attom"++ show atom)-} (return $ Atom atom)
@@ -62,14 +62,14 @@ parseNegRational = do
 
 parseInteger :: Parser LispVal
 parseInteger =  do
-  int <- many1 digit
-  return $ (LispNumber . Integer . read) int
+  int' <- many1 digit
+  return $ (LispNumber . Integer . read) int'
 
 parseNegInteger :: Parser LispVal
 parseNegInteger =  do
   _ <-  (char '-')
-  int <- many1 digit
-  return $ (LispNumber . Integer . negate . read) int
+  int' <- many1 digit
+  return $ (LispNumber . Integer . negate . read) int'
 
 parseVector :: Parser LispVal
 parseVector = do

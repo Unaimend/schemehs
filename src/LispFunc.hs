@@ -5,6 +5,7 @@ import Control.Monad.Except --throwError
 
 import LispData
 import Debug.Trace
+import Number
 
 -- implements the lisp car(head) function
 car :: [LispVal] -> ThrowsError LispVal
@@ -90,18 +91,17 @@ symbol' ( val : tail') = case val of
                            Atom _-> return $ Bool (unpackBool' (symbol' tail'))
                            otherwise -> return $ Bool False
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
-numericBinop op           []  = throwError $ NumArgs 2 []
-numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
+--numericBinop1 :: (LispNumber -> LispNumber -> LispNumber) -> [LispVal] -> ThrowsError LispVal
+numericBinOp1 op           []  = throwError $ NumArgs 2 []
+numericBinOp1 op singleVal@[_] = throwError $ NumArgs 2 singleVal
+numericBinOp1 op params =  mapM unpackNum' params >>= return . LispNumber . foldl1 op
 -- "cast" to number and apply the operator
-numericBinop op params        = mapM unpackNum params >>= return . LispNumber . Integer . foldl1 op
 
-
-minus :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+minus :: (LispNumber -> LispNumber -> LispNumber ) -> [LispVal] -> ThrowsError LispVal
 minus op           []  = throwError $ NumArgs 2 []
-minus op (x:[]) =  (return . LispNumber . Integer) =<< (fmap negate (unpackNum x))
+minus op (x:[]) =  (return . LispNumber ) =<< (fmap negate (unpackNum' x))
 -- "cast" to number and apply the operator
-minus op params        = mapM unpackNum params >>= return . LispNumber . Integer . foldl1 op
+minus op params        = mapM unpackNum' params >>= return . LispNumber . foldl1 op
 
 -- applies the correct unpacker for the two arguments of a boolean binary operation
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
@@ -118,20 +118,6 @@ even' (n:xs) =  throwError $ NumArgs 2 (n:xs)
 odd' :: [LispVal] -> ThrowsError LispVal
 odd' (n:[]) = (unpackInt n) >>= (return . Bool . not . even)
 odd' (n:xs) =  throwError $ NumArgs 2 (n:xs)
--- applies the correct unpacker for the two arguments of a boolean binary operation
-{-boolNop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
-boolNop unpacker op (x:[])= return $ x
-boolNop unpacker op (x:y:[])= do left <- unpacker $ x
-                                 right <- unpacker $ y
-                                 return $ Bool $ left `op` right
-boolNop unpacker op (x:y:xs)= do rest <- (boolNop unpacker op xs)
-                                 rest' <-  (trace $ "test" ++ show rest) (unpacker rest)
-                                 left <-   (unpacker x)
-                                 right <- unpacker y
-                                 if left `op` right then
-                                   return $ Bool $ left  `op` rest'
-                                 else
-                                   return $ Bool $ False-}
 
 -- conversion functions from lisp vals to haskell val
 unpackStr :: LispVal -> ThrowsError String
@@ -154,6 +140,18 @@ unpackInt (String n) = let parsed = reads n in
 -- singleton list can be converted to numbers, if the val in the list is convertible to number
 unpackInt (List [n]) = unpackNum n
 unpackInt notNum     = throwError $ TypeMismatch "number" notNum
+
+unpackNum' :: LispVal -> ThrowsError LispNumber
+unpackNum' (LispNumber (Integer n)) = return $ Integer n
+unpackNum' (LispNumber (Rational n)) = return $ Rational n
+-- if the val is a string try to convert it to a number(weak typing)
+{-unpackNum' (String n) = let parsed = reads n in
+                           if null parsed
+                             then throwError $ TypeMismatch "number" $ String n
+                             else return $ fst $ parsed !! 0-}
+-- singleton list can be converted to numbers, if the val in the list is convertible to number
+unpackNum' (List [n]) = unpackNum' n
+unpackNum' notNum     = throwError $ TypeMismatch "number" notNum
 
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (LispNumber (Integer n)) = return n
@@ -195,6 +193,7 @@ eqv [_, _]                                 = return $ Bool False
 eqv badArgList                             = throwError $ NumArgs 2 badArgList
 
 
+-- TODO Understand this part
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
@@ -218,13 +217,13 @@ equal badArgList = throwError $ NumArgs 2 badArgList
 
 -- Map of all primitive functions
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
-primitives = [("+", numericBinop (+)),
+primitives = [("+", numericBinOp1 (+)),
               ("-", minus (-)),
-              ("*", numericBinop (*)),
-              ("/", numericBinop div),
-              ("modulo", numericBinop mod),
-              ("quotient", numericBinop quot),
-              ("remainder", numericBinop rem),
+              ("*", numericBinOp1 (*)),
+              ("/", numericBinOp1 (/)),
+              --("modulo", numericBinOp1 mod),
+              --("quotient", numericBinOp1 quot),
+              --("remainder", numericBinOp1 rem),
               ("car", car),
               ("cdr", cdr),
               ("cons", cons),
@@ -250,7 +249,7 @@ primitives = [("+", numericBinop (+)),
               ("real?", real),
               ("complex?", complex),
               ("boolean?", boolean),
-              ("list?", numericBinop (+)),
+              --("list?", numericBinop (+)),
               --("pair?", numericBinop (+)),
               ("=", numBoolBinop (==)),
               ("<", numBoolBinop (<)),

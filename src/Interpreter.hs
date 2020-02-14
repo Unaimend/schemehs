@@ -9,6 +9,7 @@ import Data.IORef
 import Control.Monad.Except
 import System.IO
 import Debug.Trace
+import Number
 
 spaces :: Parser ()
 spaces = skipMany1 space
