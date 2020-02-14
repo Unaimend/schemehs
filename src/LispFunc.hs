@@ -97,11 +97,11 @@ numericBinOp1 op singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinOp1 op params =  mapM unpackNum' params >>= return . LispNumber . foldl1 op
 -- "cast" to number and apply the operator
 
-minus :: (LispNumber -> LispNumber -> LispNumber ) -> [LispVal] -> ThrowsError LispVal
-minus op           []  = throwError $ NumArgs 2 []
-minus op (x:[]) =  (return . LispNumber ) =<< (fmap negate (unpackNum' x))
+minus :: [LispVal] -> ThrowsError LispVal
+minus           []  = throwError $ NumArgs 2 []
+minus  (x:[]) =  (return . LispNumber ) =<< (fmap negate (unpackNum' x))
 -- "cast" to number and apply the operator
-minus op params        = mapM unpackNum' params >>= return . LispNumber . foldl1 op
+minus  params        = mapM unpackNum' params >>= return . LispNumber . foldl1 (-)
 
 -- applies the correct unpacker for the two arguments of a boolean binary operation
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
@@ -213,12 +213,10 @@ equal [arg1, arg2] = do
       return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
-
-
 -- Map of all primitive functions
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinOp1 (+)),
-              ("-", minus (-)),
+              ("-", minus ),
               ("*", numericBinOp1 (*)),
               ("/", numericBinOp1 (/)),
               --("modulo", numericBinOp1 mod),
