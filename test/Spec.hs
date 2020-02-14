@@ -7,6 +7,7 @@ import Text.Parsec.Prim hiding(parseTest)--Stream
 import Data.Functor.Identity --Identity
 import Interpreter
 import Data.Either
+import Data.Ratio
 import LispData
 import FileIO
 
@@ -28,7 +29,11 @@ integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (L
                eqT parseInteger "100" (LispNumber $ Integer $ 100),
                --eqT parseExpr "(- 100)" (LispNumber $ Integer $  (-100)), TODO FIX LATER
                --eqT parseInteger "(-100)" (Integer  (-100)) this one should fail 
-               eqT parseNegInteger "-100" (LispNumber $ Integer $ (-100))
+               eqT parseNegInteger "-100" (LispNumber $ Integer $ (-100)),
+               eqT parseNegInteger "-100" (LispNumber $ Integer $ (-100)),
+               eqT parseNegRational "-100/1" (LispNumber $ Rational $ (-100 % 1)),
+               eqT parseNegRational "100/1" (LispNumber $ Rational $ (100 % 1)),
+               eqT parseNegRational "50/2" (LispNumber $ Rational $ (25 % 1))
              ]
 
 testInter ::  String -> String -> IO Test
