@@ -138,7 +138,7 @@ unpackInt (String n) = let parsed = reads n in
                              then throwError $ TypeMismatch "integer" $ String n
                              else return $ fst $ parsed !! 0
 -- singleton list can be converted to numbers, if the val in the list is convertible to number
-unpackInt (List [n]) = unpackNum n
+--unpackInt (List [(LispNumber (Integer n))]) = return $ Integer $ unpackNum' n
 unpackInt notNum     = throwError $ TypeMismatch "number" notNum
 
 unpackNum' :: LispVal -> ThrowsError LispNumber
@@ -153,7 +153,7 @@ unpackNum' (LispNumber (Rational n)) = return $ Rational n
 unpackNum' (List [n]) = unpackNum' n
 unpackNum' notNum     = throwError $ TypeMismatch "number" notNum
 
-unpackNum :: LispVal -> ThrowsError Integer
+{-unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (LispNumber (Integer n)) = return n
 -- if the val is a string try to convert it to a number(weak typing)
 unpackNum (String n) = let parsed = reads n in
@@ -162,10 +162,10 @@ unpackNum (String n) = let parsed = reads n in
                              else return $ fst $ parsed !! 0
 -- singleton list can be converted to numbers, if the val in the list is convertible to number
 unpackNum (List [n]) = unpackNum n
-unpackNum notNum     = throwError $ TypeMismatch "number" notNum
+unpackNum notNum     = throwError $ TypeMismatch "number" notNum-}
 
 --numBoolNop  = boolNop unpackNum
-numBoolBinop  = boolBinop unpackNum
+numBoolBinop  = boolBinop unpackNum'
 strBoolBinop  = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
 
@@ -208,7 +208,7 @@ unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
 equal :: [LispVal] -> ThrowsError LispVal
 equal [arg1, arg2] = do
       primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
-                         [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
+                         [AnyUnpacker unpackNum', AnyUnpacker unpackStr, AnyUnpacker unpackBool]
       eqvEquals <- eqv [arg1, arg2]
       return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList
@@ -250,9 +250,9 @@ primitives = [("+", numericBinOp1 (+)),
               --("list?", numericBinop (+)),
               --("pair?", numericBinop (+)),
               ("=", numBoolBinop (==)),
+              ("/=", numBoolBinop (/=)),
               ("<", numBoolBinop (<)),
               (">", numBoolBinop (>)),
-              ("/=", numBoolBinop (/=)),
               (">=", numBoolBinop (>=)),
               ("<=", numBoolBinop (<=)),
               ("&&", boolBoolBinop (&&)),

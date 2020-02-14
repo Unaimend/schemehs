@@ -44,7 +44,14 @@ instance Fractional LispNumber where
   (Rational a) / (Rational b) = (Rational $ a / b)
 
   fromRational i = Rational i
+instance Ord LispNumber where
+  compare (Integer a) (Integer b) = (compare a b)
+  compare (Real a) (Real b) = (compare a b)
+  compare (Rational a) (Rational b) = (compare a b)
+  compare (Complex a) (Complex b) = error "Cant order complex numbers"
 
+
+  
 showNumber :: LispNumber -> String
 showNumber ((Integer a))  = show a
 showNumber ((Complex a))  = show a
