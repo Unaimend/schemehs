@@ -152,7 +152,7 @@ unpackNum' (LispNumber (Real n)) = return $ Real n
                              else return $ fst $ parsed !! 0-}
 -- singleton list can be converted to numbers, if the val in the list is convertible to number
 unpackNum' (List [n]) = unpackNum' n
-unpackNum' notNum     = throwError $ TypeMismatch "number" notNum
+unpackNum' notNum     = throwError $ TypeMismatch "UnpackNum: number" notNum
 
 {-unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (LispNumber (Integer n)) = return n
