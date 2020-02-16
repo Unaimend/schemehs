@@ -33,6 +33,7 @@ integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (L
                eqT parseNegInteger "-100" (LispNumber $ Integer $ (-100)),
                eqT parseNegInteger "-100" (LispNumber $ Integer $ (-100)),
                eqT parseNegRational "-100/1" (LispNumber $ Rational $ (-100 % 1)),
+               eqT parseNegRational "-25/1" (LispNumber $ Rational $ (-50 % 2)),
                eqT parseNegRational "100/1" (LispNumber $ Rational $ (100 % 1)),
                eqT parseNegRational "50/2" (LispNumber $ Rational $ (25 % 1))
              ]

@@ -6,12 +6,18 @@ import Control.Monad
 import Number
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Text.Parsec.Number 
+import Text.Parsec.Error
+import Debug.Trace
 import LispData
 --TODO Learn monads again and check what mapM is doing
 
 -- Recognizes if a character is a valid scheme symbol
 symbol :: Parser Char
-symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
+symbol = oneOf "-.!#$%&|*+/:<=>?@^_~"
+
+--symb = [".","!","#","$","%","&","|","*","+","/",":","<","=",">","?","@","^","_","~", "- ", "#"]
+--lett = (map (:[]) $ ['a' .. 'z']) ++ (map (:[]) ['A' .. 'Z'])
+--symlpars = map string (symb ++ lett) -- ++ (map show [ 0 .. 10])
 
 -- Skips one or more spaces
 spaces1 :: Parser ()
@@ -41,33 +47,44 @@ parseString = do
 -- Parses a symbol
 parseAtom :: Parser LispVal
 parseAtom = do
-  first <- (letter <|> symbol) --First char must be a letter or a sybmol
+  first <- trace "FUUC" ((letter <|> symbol) <?> "I HATE PARSEC")
+  --first <- choice symlpars
   --the following chars must be one of letter, digit or symbol
-  rest <-  (many (letter <|> digit <|> symbol))
-  let atom = first:rest
+  rest <-  (many (letter <|> digit <|> symbol)) 
+  let atom = first :rest
   --catch special atoms
   case atom of "#t" -> return $ Bool True
                "#f" -> return $ Bool False
                ('-':x:_)   -> case x of
                    ' ' -> return $ Atom atom
-                   _   -> return $ (LispNumber . Integer . read) atom --TODO THIS IS NOT GOOD, try to parse -3o
+                   _   -> do x <- parseNumber
+                             return x--return $ (LispNumber . Integer . read) atom --TODO THIS IS NOT GOOD, try to parse -3o
                _    -> {-trace ("attom"++ show atom)-} (return $ Atom atom)
+
+parseNegFloat :: Parser LispVal
+parseNegFloat = do
+  s <- trace "Float" sign
+  beforeDot <- int
+  dot <- char '.' <?> "Floating Point Parse Error: expecting ."
+  afterDot <- int
+  let d = s (read ((show beforeDot) ++ "." ++ (show afterDot)))
+  return $ (LispNumber . Real) d
 
 parseNegRational :: Parser LispVal
 parseNegRational = do
-  top <- int
+  top <- trace "Ration" int
   _ <- char '/'
   bottom <- int
   return $ (LispNumber . Rational) (top % bottom)
 
 parseInteger :: Parser LispVal
 parseInteger =  do
-  int' <- many1 digit
+  int' <- trace "Int " (many1 digit)
   return $ (LispNumber . Integer . read) int'
 
 parseNegInteger :: Parser LispVal
 parseNegInteger =  do
-  _ <-  (char '-')
+  _ <-  trace "NegInt" (char '-')
   int' <- many1 digit
   return $ (LispNumber . Integer . negate . read) int'
 
@@ -97,17 +114,20 @@ parseQuoted = do
     x <- parseExpr
     return $ List [Atom "quote", x]
 
-parseExpr :: Parser LispVal
-parseExpr = parseAtom --first try to parse a atom
-         <|> parseString -- if this fails try to parse a string
+parseNumber = (try parseNegFloat <?> "DdwdS")
          <|> try parseNegRational
          <|> try parseNegInteger --TODO WENN MIR WAS UM DIE OHREN FLIEGT LIEGTS HIER DRAN
          <|> parseInteger -- etc
+
+parseExpr :: Parser LispVal
+parseExpr = try parseAtom --first try to parse a atom
+         <|> parseNumber
+         <|> parseString -- if this fails try to parse a string
          <|> parseQuoted
          <|> do _ <- char '('
                 -- parses a normal list until it encounter a dot, at which point it will go back and sstart to parse
                 -- a dotted list
-                x <- try parseList <|> parseDottedList
+                x <- trace "LIST?>" (try parseList <|> parseDottedList)
                 _ <- char ')'
                 return x
 

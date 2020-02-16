@@ -51,6 +51,15 @@ equalVal (Bool a) (Bool b) = a == b
 equalVal (List l) (List r) = l == r
 
 showVal :: LispVal -> String
+{-showVal (String contents) = "String " ++ (show contents)
+showVal (Atom name) = "Atom " ++ (show name)
+showVal (LispNumber contents) = "LispNumber" ++ (show contents)
+showVal (Bool True) = "Bool True"
+showVal (Bool False) = "Bool False"
+showVal (List contents) = "(" ++ unwordsList contents ++ ")"
+showVal (DottedList head' tail') = "(" ++ unwordsList head' ++ " . " ++ showVal tail' ++ ")"
+showVal (Vector contents) = "(" ++ unwordsList contents ++ ")"-}
+
 showVal (String contents) = "\"" ++ contents ++ "\""
 showVal (Atom name) = name
 showVal (LispNumber contents) = show contents
@@ -58,7 +67,7 @@ showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head' tail') = "(" ++ unwordsList head' ++ " . " ++ showVal tail' ++ ")"
-showVal (Vector contents) = "(" ++ unwordsList contents ++ ")"
+showVal (Vector contents) = "(" ++ unwordsList contents ++ ")" 
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (Func {params = args, vararg = varargs, body = body, closure = env}) =
    "(lambda (" ++ unwords (map show args) ++
