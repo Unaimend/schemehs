@@ -139,11 +139,12 @@ unpackInt (String n) = let parsed = reads n in
                              else return $ fst $ parsed !! 0
 -- singleton list can be converted to numbers, if the val in the list is convertible to number
 --unpackInt (List [(LispNumber (Integer n))]) = return $ Integer $ unpackNum' n
-unpackInt notNum     = throwError $ TypeMismatch "number" notNum
+unpackInt notNum     = throwError $ TypeMismatch "UnpackInt: number" notNum
 
 unpackNum' :: LispVal -> ThrowsError LispNumber
 unpackNum' (LispNumber (Integer n)) = return $ Integer n
 unpackNum' (LispNumber (Rational n)) = return $ Rational n
+unpackNum' (LispNumber (Real n)) = return $ Real n
 -- if the val is a string try to convert it to a number(weak typing)
 {-unpackNum' (String n) = let parsed = reads n in
                            if null parsed
