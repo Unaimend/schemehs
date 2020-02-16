@@ -16,6 +16,10 @@ instance Num LispNumber where
   (Complex a)  + (Complex b) = (Complex $ a + b)
 
   (Integer a)  - (Integer b) = (Integer $ a - b)
+  (Integer a)  - (Real b) = (Real $ fromInteger a - b)
+  (Integer a)  - (Rational b) = (Rational $ fromInteger  a - b)
+  (Integer a)  - (Complex b) = (Complex $ fromInteger a - b)
+
   (Real a)  - (Real b) = (Real $ a - b)
   (Rational a)  - (Rational b) = (Rational $ a - b)
   (Complex a)  - (Complex b) = (Complex $ a - b)
