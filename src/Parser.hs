@@ -14,11 +14,6 @@ import LispData
 -- Recognizes if a character is a valid scheme symbol
 symbol :: Parser Char
 symbol = oneOf "-.!#$%&|*+/:<=>?@^_~"
-
---symb = [".","!","#","$","%","&","|","*","+","/",":","<","=",">","?","@","^","_","~", "- ", "#"]
---lett = (map (:[]) $ ['a' .. 'z']) ++ (map (:[]) ['A' .. 'Z'])
---symlpars = map string (symb ++ lett) -- ++ (map show [ 0 .. 10])
-
 -- Skips one or more spaces
 spaces1 :: Parser ()
 spaces1 = skipMany1 space
@@ -47,7 +42,7 @@ parseString = do
 -- Parses a symbol
 parseAtom :: Parser LispVal
 parseAtom = do
-  first <- trace "FUUC" ((letter <|> symbol) <?> "I HATE PARSEC")
+  first <- ((letter <|> symbol) <?> "I HATE PARSEC")
   --first <- choice symlpars
   --the following chars must be one of letter, digit or symbol
   rest <-  (many (letter <|> digit <|> symbol)) 
@@ -63,7 +58,7 @@ parseAtom = do
 
 parseNegFloat :: Parser LispVal
 parseNegFloat = do
-  s <- trace "Float" sign
+  s <-  sign
   beforeDot <- int
   dot <- char '.' <?> "Floating Point Parse Error: expecting ."
   afterDot <- int
@@ -72,19 +67,19 @@ parseNegFloat = do
 
 parseNegRational :: Parser LispVal
 parseNegRational = do
-  top <- trace "Ration" int
+  top <- int
   _ <- char '/'
   bottom <- int
   return $ (LispNumber . Rational) (top % bottom)
 
 parseInteger :: Parser LispVal
 parseInteger =  do
-  int' <- trace "Int " (many1 digit)
+  int' <- (many1 digit)
   return $ (LispNumber . Integer . read) int'
 
 parseNegInteger :: Parser LispVal
 parseNegInteger =  do
-  _ <-  trace "NegInt" (char '-')
+  _ <-  (char '-')
   int' <- many1 digit
   return $ (LispNumber . Integer . negate . read) int'
 
