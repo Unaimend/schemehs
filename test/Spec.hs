@@ -56,12 +56,21 @@ integerInterp = [-- math function integer
                  testInter "0" "(+ 3 (- 3))",
                  testInter "-3" "(+ 0 (- 3))",
                  testInter "3" "(+ 3 (- 0))",
+                 testInter "3" "(- -3)",
                  -- math function rational
                  testInter "6/1" "(+ 3/1 3/1)",
                  testInter "0/1" "(+ 0/1 0/1)",
                  testInter "1/1" "(* 4/2 1/2)",
                  testInter "0/1" "(* 0/2 1/2)",
                  testInter "1/2" "(* 1/1 1/2)",
+                 testInter "3/2" "(- -3/2)",
+                 -- math function real 
+                 testInter "6.0" "(+ 3.0 3.0)",
+                 testInter "0.0" "(+ 0.0 0.0)",
+                 testInter "1.0" "(* 2.0 0.5)",
+                 testInter "0.0" "(* 0.0 0.5)",
+                 testInter "0.5" "(* 1.0 0.5)",
+                 testInter "0.3" "(- -0.3)",
                  --Typetesting functions number
                  testInter "#t" "(number? 3 3 3)",
                  testInter "#t" "(number? 3)",

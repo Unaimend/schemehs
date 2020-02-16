@@ -109,7 +109,7 @@ parseQuoted = do
     x <- parseExpr
     return $ List [Atom "quote", x]
 
-parseNumber = (try parseNegFloat <?> "DdwdS")
+parseNumber = (try parseNegFloat)
          <|> try parseNegRational
          <|> try parseNegInteger --TODO WENN MIR WAS UM DIE OHREN FLIEGT LIEGTS HIER DRAN
          <|> parseInteger -- etc
