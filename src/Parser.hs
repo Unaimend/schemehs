@@ -109,7 +109,7 @@ parseQuoted = do
     x <- parseExpr
     return $ List [Atom "quote", x]
 
-parseNumber = (try parseNegFloat <?> "DdwdS")
+parseNumber = (try parseNegFloat)
          <|> try parseNegRational
          <|> try parseNegInteger --TODO WENN MIR WAS UM DIE OHREN FLIEGT LIEGTS HIER DRAN
          <|> parseInteger -- etc
@@ -122,7 +122,7 @@ parseExpr = try parseAtom --first try to parse a atom
          <|> do _ <- char '('
                 -- parses a normal list until it encounter a dot, at which point it will go back and sstart to parse
                 -- a dotted list
-                x <- trace "LIST?>" (try parseList <|> parseDottedList)
+                x <- try parseList <|> parseDottedList
                 _ <- char ')'
                 return x
 
