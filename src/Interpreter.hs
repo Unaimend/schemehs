@@ -8,7 +8,6 @@ import Parser
 import Data.IORef
 import Control.Monad.Except
 import System.IO
-import Debug.Trace
 import Number
 
 spaces :: Parser ()

@@ -1,6 +1,6 @@
 module LispData where
 
-import Control.Monad
+
 import Data.IORef --IOref
 import Control.Monad.Except --ExceptT
 import System.IO --Handle
@@ -90,6 +90,7 @@ showError (Parser parseErr)             = "Parse error at " ++ show parseErr
 
 
 -- TODO Raff ich immer noch nich ganz
+trapError :: (MonadError a m, Show a) => m String -> m String
 trapError action = catchError action (return . show)
 
 -- creates a string from an array of LispVals, it inserts space characters between original strings
