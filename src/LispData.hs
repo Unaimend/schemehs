@@ -18,7 +18,7 @@ data LispVal = Atom String
              | DottedList [LispVal] LispVal
              | Vector [LispVal]
              | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
-             | Func { params :: [String], vararg :: (Maybe String),
+             | Func { params :: [String], vararg :: Maybe String,
                       body :: [LispVal], closure :: Env }
              | IOFunc ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
@@ -49,6 +49,7 @@ equalVal (LispNumber a) (LispNumber b) = a == b
 equalVal (String a) (String b) = a == b
 equalVal (Bool a) (Bool b) = a == b
 equalVal (List l) (List r) = l == r
+equalVal _ _ = error "Trying to compare values of different types"
 
 showVal :: LispVal -> String
 {-showVal (String contents) = "String " ++ (show contents)
@@ -69,7 +70,7 @@ showVal (List contents) = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head' tail') = "(" ++ unwordsList head' ++ " . " ++ showVal tail' ++ ")"
 showVal (Vector contents) = "(" ++ unwordsList contents ++ ")" 
 showVal (PrimitiveFunc _) = "<primitive>"
-showVal (Func {params = args, vararg = varargs, body = body, closure = env}) =
+showVal Func {params = args, vararg = varargs, body = body, closure = env} =
    "(lambda (" ++ unwords (map show args) ++
       (case varargs of
          Nothing -> ""
@@ -87,6 +88,7 @@ showError (NumArgs expected found)      = "Expected " ++ show expected
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
                                        ++ ", found " ++ show found
 showError (Parser parseErr)             = "Parse error at " ++ show parseErr
+showError (Default s)             = "Error at " ++ show s
 
 
 -- TODO Raff ich immer noch nich ganz
@@ -99,3 +101,4 @@ unwordsList = unwords . map showVal
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
+extractValue _ = error "You are not allowed to extract the left value of an error with extractValue"

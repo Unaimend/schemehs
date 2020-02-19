@@ -9,8 +9,8 @@ import Number
 
 -- implements the lisp car(head) function
 car :: [LispVal] -> ThrowsError LispVal
-car [List (x : xs)]         = return x
-car [DottedList (x : xs) _] = return x
+car [List (x : _)]         = return x
+car [DottedList (x : _) _] = return x
 car [badArg]                = throwError $ TypeMismatch "pair" badArg
 car badArgList              = throwError $ NumArgs 1 badArgList
 

@@ -1,9 +1,6 @@
 module FileIO where
 
 import Interpreter
-import System.Environment
-
-import Control.Monad
 import System.IO
 import LispData
 import System.Console.Readline

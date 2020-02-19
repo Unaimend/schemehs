@@ -35,7 +35,7 @@ getVar envRef var  =  do env <- liftIO $ readIORef envRef --get the environment
 setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 setVar envRef var value = do env <- liftIO $ readIORef envRef
                              maybe (throwError $ UnboundVar "Setting an unbound variable" var)
-                                   (liftIO . (flip writeIORef value))
+                                   (liftIO . flip writeIORef value)
                                    (lookup var env)
                              return value
 
@@ -53,7 +53,7 @@ defineVar envRef var value = do
 
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
-     where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
+     where extendEnv bindings' env = fmap (++ env) (mapM addBinding bindings')
            addBinding (var, value) = do ref <- newIORef value
                                         return (var, ref)
 
@@ -95,17 +95,17 @@ eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
 eval env (List [Atom "define", Atom var, form]) =
      eval env form >>= defineVar env var
 eval env (List [Atom "load", String filename]) = 
-     load filename >>= liftM last . mapM (eval env)
+     load filename >>= fmap last . mapM (eval env)
 eval env (List (function : args)) = do
      func <- eval env function
      argVals <- mapM (eval env) args
      apply func argVals
 -- Since this is the last pattern it will only match if all other pattern failed which means that we parsed invalid lisp code
-eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 
 primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= (flip bindVars $ map makePrimitiveFunc primitives)
+primitiveBindings = nullEnv >>= flip bindVars (map makePrimitiveFunc primitives)
      where makePrimitiveFunc (var, func) = (var, PrimitiveFunc func)
 
 makeFunc :: Monad m =>
@@ -125,12 +125,12 @@ apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (Func params varargs body closure) args =
       if num params /= num args && varargs == Nothing
          then throwError $ NumArgs (num params) args
-         else (liftIO $ bindVars closure $ zip params args) >>= bindVarArgs varargs >>= evalBody
+         else liftIO (bindVars closure $ zip params args) >>= bindVarArgs varargs >>= evalBody
       where remainingArgs = drop (length params) args
             num = toInteger . length
-            evalBody env = liftM last $ mapM (eval env) body
+            evalBody env = last <$> mapM (eval env) body
             bindVarArgs arg env = case arg of
-                Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
+                Just argName -> liftIO $ bindVars env [(argName, List remainingArgs)]
                 Nothing -> return env
 apply f _ = throwError $ BadSpecialForm "Missing space before functions application" f
 
@@ -146,10 +146,10 @@ ioPrimitives = [("apply", applyProc),
                 ("read-all", readAll)]
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
-makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
+makePort mode [String filename] = fmap Port $ liftIO $ openFile filename mode
 
 closePort :: [LispVal] -> IOThrowsError LispVal
-closePort [Port port] = liftIO $ hClose port >> (return $ Bool True)
+closePort [Port port] = liftIO $ hClose port >> return (Bool True)
 closePort _           = return $ Bool False
 
 applyProc :: [LispVal] -> IOThrowsError LispVal
@@ -165,13 +165,13 @@ writeProc [obj]            = writeProc [obj, Port stdout]
 writeProc [obj, Port port] = liftIO $ hPrint port obj >> (return $ Bool True)
 
 readContents :: [LispVal] -> IOThrowsError LispVal
-readContents [String filename] = liftM String $ liftIO $ readFile filename
+readContents [String filename] = fmap String $ liftIO $ readFile filename
 
 load :: String -> IOThrowsError [LispVal]
 load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
 
 readAll :: [LispVal] -> IOThrowsError LispVal
-readAll [String filename] = liftM List $ load filename
+readAll [String filename] = fmap List $ load filename
 
 
 
