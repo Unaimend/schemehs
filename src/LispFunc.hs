@@ -4,7 +4,6 @@ module LispFunc where
 import Control.Monad.Except --throwError
 
 import LispData
-import Debug.Trace
 import Number
 
 -- implements the lisp car(head) function
@@ -16,7 +15,7 @@ car badArgList              = throwError $ NumArgs 1 badArgList
 
 --implements the lisp cdr(tail) function
 cdr :: [LispVal] -> ThrowsError LispVal
-cdr [List (x : xs)]         = return $ List xs
+cdr [List (_ : xs)]         = return $ List xs
 cdr [DottedList [_] x]      = return x
 cdr [DottedList (_ : xs) x] = return $ DottedList xs x
 cdr [badArg]                = throwError $ TypeMismatch "pair" badArg
@@ -26,25 +25,30 @@ unpackBool' :: ThrowsError LispVal -> Bool
 unpackBool' (Right (Bool bool))= bool
 
 boolean :: [LispVal] -> ThrowsError LispVal
-boolean (Bool _ : [] ) = return $ Bool True
+boolean [Bool _] = return $ Bool True
 boolean (Bool _ : tail') = return $ Bool (unpackBool' (boolean tail'))
 boolean _ = return $ Bool False
 
 ---------------------------------------NUMBER FUNCTIONS---------------------------------------------
+pair :: [LispVal] -> ThrowsError LispVal
+pair [List a] = if length a >= 2 then return $ Bool True else return $ Bool False
+pair [DottedList init' _] =  if not $ null init' then return $ Bool True else return $ Bool False
+pair _ = return $ Bool False
+
 number :: [LispVal] -> ThrowsError LispVal
-number (LispNumber _ : []) = return $ Bool True
+number [LispNumber _] = return $ Bool True
 number (LispNumber _ : xs) = return $ Bool $ unpackBool' $ number xs
 number _ = return $ Bool False
 
 integer :: [LispVal] -> ThrowsError LispVal
-integer (LispNumber (Integer _) : []) = return $ Bool True
+integer [LispNumber (Integer _)] = return $ Bool True
 integer (LispNumber (Integer _) : xs) = return $ Bool $ unpackBool' $ integer xs
 integer _                             = return $ Bool False
 
 rational :: [LispVal] -> ThrowsError LispVal
-rational (LispNumber (Integer _) : [])  = return $ Bool True
+rational [(LispNumber (Integer _))]  = return $ Bool True
 rational (LispNumber (Integer _) : xs)  = return $ Bool $ unpackBool' $ rational xs
-rational (LispNumber (Rational _) : []) = return $ Bool True
+rational [(LispNumber (Rational _))] = return $ Bool True
 rational (LispNumber (Rational _) : xs) = return $ Bool $ unpackBool' $ rational xs
 rational _                              = return $ Bool False
 
@@ -238,7 +242,7 @@ primitives = [("+", numericBinOp1 (+)),
               ("complex?", complex),
               ("boolean?", boolean),
               --("list?", numericBinop (+)),
-              --("pair?", numericBinop (+)),
+              ("pair?", pair),
               ("=", numBoolBinop (==)),
               ("/=", numBoolBinop (/=)),
               ("<", numBoolBinop (<)),
