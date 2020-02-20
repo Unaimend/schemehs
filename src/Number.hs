@@ -47,7 +47,7 @@ instance Fractional LispNumber where
   (Complex a) / (Complex b)   = Complex $ a / b
   (Rational a) / (Rational b) = Rational $ a / b
 
-  fromRational = Rational 
+  fromRational = Rational
 
 instance Ord LispNumber where
   compare (Integer a) (Integer b) = compare a b

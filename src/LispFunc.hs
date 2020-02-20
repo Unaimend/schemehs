@@ -42,9 +42,9 @@ integer (LispNumber (Integer _) : xs) = return $ Bool $ unpackBool' $ integer xs
 integer _                             = return $ Bool False
 
 rational :: [LispVal] -> ThrowsError LispVal
-rational (LispNumber (Integer _) : [])  = return $ Bool True
+rational [(LispNumber (Integer _))]  = return $ Bool True
 rational (LispNumber (Integer _) : xs)  = return $ Bool $ unpackBool' $ rational xs
-rational (LispNumber (Rational _) : []) = return $ Bool True
+rational [(LispNumber (Rational _))] = return $ Bool True
 rational (LispNumber (Rational _) : xs) = return $ Bool $ unpackBool' $ rational xs
 rational _                              = return $ Bool False
 
