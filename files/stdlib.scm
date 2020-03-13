@@ -12,3 +12,11 @@
   (if (null? lst)
       accum
       (foldl func (func accum (head lst)) (tail lst))))
+
+(define (map proc lis)
+   (if (null? lis)
+          '()
+          (cons (proc (car lis)) (map proc (cdr lis)))))
+
+
+
