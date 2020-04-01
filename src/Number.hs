@@ -3,8 +3,7 @@ import Data.Complex --Complex
 import Data.Ratio --Rational
 
 data LispNumber = Integer Integer -- Stores a Haskell Integer
-                | Real Double
-                | Rational Rational
+                | Real Double | Rational Rational
                 | Complex (Complex Double) deriving(Eq)
 
 instance Show LispNumber where show = showNumber
