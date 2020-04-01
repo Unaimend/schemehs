@@ -50,6 +50,14 @@ instance Fractional LispNumber where
 
 instance Ord LispNumber where
   compare (Integer a) (Integer b) = compare a b
+  compare (Integer a) (Rational b) = compare (fromIntegral a) b
+  compare (Integer a) (Real b) = compare (fromIntegral a) b
+  compare (Integer a) (Complex b) = error "Cant order complex numbers"
+
+  compare (Rational b) (Integer a)= compare b (fromIntegral a)
+  compare (Real b) (Integer a)= compare b (fromIntegral a)
+  compare (Complex b) (Integer a) = error "Cant order complex numbers"
+
   compare (Real a) (Real b) = compare a b
   compare (Rational a) (Rational b) = compare a b
   compare (Complex _) (Complex _) = error "Cant order complex numbers"
@@ -61,3 +69,4 @@ showNumber (Integer a)  = show a
 showNumber (Complex a)  = show a
 showNumber (Rational a) = show (numerator a) ++ "/" ++ show (denominator a)
 showNumber (Real a)     = show a
+

@@ -189,7 +189,7 @@ eqv [(LispNumber arg1), (LispNumber arg2)]         = return $ Bool $ arg1 == arg
 eqv [(String arg1), (String arg2)]         = return $ Bool $ arg1 == arg2
 eqv [(Atom arg1), (Atom arg2)]             = return $ Bool $ arg1 == arg2
 eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
-eqv [(List arg1), (List arg2)]             = return $ Bool $ (length arg1 == length arg2) && 
+eqv [(List arg1), (List arg2)]             = return $ Bool $ (length arg1 == length arg2) &&
                                                              (all eqvPair $ zip arg1 arg2)
      where eqvPair (x1, x2) = case eqv [x1, x2] of
                                 Left err -> False
@@ -202,7 +202,7 @@ eqv badArgList                             = throwError $ NumArgs 2 badArgList
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
-unpackEquals arg1 arg2 (AnyUnpacker unpacker) = 
+unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
              do unpacked1 <- unpacker arg1
                 unpacked2 <- unpacker arg2
                 return $ unpacked1 == unpacked2
@@ -259,4 +259,57 @@ primitives = [("+", numericBinOp1 (+)),
               ("symbol?", symbol'),
               ("string?", LispFunc.string),
               --("inexact?", exact),
+              ("floor", floor'),
+              ("ceil", ceil'),
+              ("round", round'),
+              ("truncate", truncate'),
+              ("exp", exp'),
               ("exact?", exact)]
+
+
+
+floor' :: [LispVal] -> ThrowsError LispVal
+floor' (LispNumber (Integer n) : [])  = return . LispNumber . Integer $ n
+floor' (LispNumber (Rational n) : []) = return . LispNumber . Integer $ floor n
+floor' (LispNumber (Real n) : [])     = return . LispNumber . Integer $ floor n
+floor' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex floor " $ (LispNumber . Complex) n
+floor' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+floor' x  = throwError $ TypeMismatch "Floor' takes numbers" $ List x
+
+
+ceil' :: [LispVal] -> ThrowsError LispVal
+ceil' (LispNumber (Integer n) : [])  = return . LispNumber . Integer $ n
+ceil' (LispNumber (Rational n) : []) = return . LispNumber . Integer $ ceiling n
+ceil' (LispNumber (Real n) : [])     = return . LispNumber . Integer $ ceiling n
+ceil' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex ceil " $ (LispNumber . Complex) n
+ceil' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+ceil' x  = throwError $ TypeMismatch "Ceil' takes numbers" $ List x
+
+
+round' :: [LispVal] -> ThrowsError LispVal
+round' (LispNumber (Integer n) : [])  = return . LispNumber . Integer $ n
+round' (LispNumber (Rational n) : []) = return . LispNumber . Integer $ round n
+round' (LispNumber (Real n) : [])     = return . LispNumber . Integer $ round n
+round' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex round " $ (LispNumber . Complex) n
+round' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+round' x  = throwError $ TypeMismatch "Round' takes numbers" $ List x
+
+
+truncate' :: [LispVal] -> ThrowsError LispVal
+truncate' (LispNumber (Integer n) : [])  = return . LispNumber . Integer $ n
+truncate' (LispNumber (Rational n) : []) = return . LispNumber . Integer $ truncate n
+truncate' (LispNumber (Real n) : [])     = return . LispNumber . Integer $ truncate n
+truncate' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex truncate " $ (LispNumber . Complex) n
+truncate' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+truncate' x  = throwError $ TypeMismatch "Truncate' takes numbers" $ List x
+
+
+exp' :: [LispVal] -> ThrowsError LispVal
+exp' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ exp (fromIntegral n)
+exp' (LispNumber (Rational n) : []) = return . LispNumber . Real $ exp (realToFrac n)
+exp' (LispNumber (Real n) : [])     = return . LispNumber . Real $ exp n
+exp' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex exp " $ (LispNumber . Complex) n
+exp' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+exp' x  = throwError $ TypeMismatch "Exp' takes numbers" $ List x
+
+

@@ -35,7 +35,9 @@ integerParse = test [("parse \"123\"" ~: ((parseTest parseInteger "123")) ~?= (L
                eqT parseNegRational "-100/1" (LispNumber $ Rational $ (-100 % 1)),
                eqT parseNegRational "-25/1" (LispNumber $ Rational $ (-50 % 2)),
                eqT parseNegRational "100/1" (LispNumber $ Rational $ (100 % 1)),
-               eqT parseNegRational "50/2" (LispNumber $ Rational $ (25 % 1))
+               eqT parseNegRational "50/2" (LispNumber $ Rational $ (25 % 1)),
+               eqT parseNegFloat "5.2" (LispNumber $ Real $ 5.2),
+               eqT parseNegFloat "-5.2" (LispNumber $ Real $ (- 5.2))
              ]
 
 testInter ::  String -> String -> IO Test
@@ -57,6 +59,9 @@ integerInterp = [-- math function integer
                  testInter "-3" "(+ 0 (- 3))",
                  testInter "3" "(+ 3 (- 0))",
                  testInter "3" "(- -3)",
+
+                 testInter  "4" "(floor 4)",
+                 testInter  "4" "(ceil 4)",
                  -- math function rational
                  testInter "6/1" "(+ 3/1 3/1)",
                  testInter "0/1" "(+ 0/1 0/1)",
@@ -64,6 +69,8 @@ integerInterp = [-- math function integer
                  testInter "0/1" "(* 0/2 1/2)",
                  testInter "1/2" "(* 1/1 1/2)",
                  testInter "3/2" "(- -3/2)",
+                 testInter "4" "(floor 9/2)" ,
+                 testInter "5" "(ceil 9/2)" ,
                  -- math function real 
                  testInter "6.0" "(+ 3.0 3.0)",
                  testInter "0.0" "(+ 0.0 0.0)",
@@ -71,6 +78,8 @@ integerInterp = [-- math function integer
                  testInter "0.0" "(* 0.0 0.5)",
                  testInter "0.5" "(* 1.0 0.5)",
                  testInter "0.3" "(- -0.3)",
+                 testInter  "4" "(floor 4.5)",
+                 testInter  "5" "(ceil 4.5)",
                  --Typetesting functions number
                  testInter "#t" "(number? 3 3 3)",
                  testInter "#t" "(number? 3)",
