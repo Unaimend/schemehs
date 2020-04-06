@@ -1,8 +1,10 @@
 module Parser where
 
 import Data.Ratio
+import Data.Complex
 
 import Number
+import LispData
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Text.Parsec.Number
 
@@ -54,6 +56,25 @@ parseAtom = do
                    _   -> parseNumber
                              --return $ (LispNumber . Integer . read) atom --TODO THIS IS NOT GOOD, try to parse -3o
                _    -> {-trace ("attom"++ show atom)-} (return $ Atom atom)
+
+parseComplex :: Parser LispVal
+parseComplex = do
+  f <- parseNumber
+  s <- char '+'
+  n <- parseNumber
+  i <- char 'i' 
+  let x = case f of
+        ((LispNumber (Integer n))) -> (fromIntegral n :: Double)
+        ((LispNumber (Rational n))) -> (realToFrac n)
+        ((LispNumber (Real n))) -> n
+        _ -> 0
+
+  let y = case n of
+        ((LispNumber (Integer p))) -> (fromIntegral p :: Double)
+        ((LispNumber (Rational p))) -> (realToFrac p)
+        ((LispNumber (Real p))) -> p
+        _ -> 0
+  return $ (LispNumber . Complex) (x :+ y)
 
 parseNegFloat :: Parser LispVal
 parseNegFloat = do
@@ -109,12 +130,13 @@ parseQuoted = do
     return $ List [Atom "quote", x]
 
 parseNumber = try parseNegFloat
-         <|> try parseNegRational
-         <|> try parseNegInteger --TODO WENN MIR WAS UM DIE OHREN FLIEGT LIEGTS HIER DRAN
-         <|> parseInteger -- etc
+              <|> try parseNegRational
+              <|> try parseNegInteger --TODO WENN MIR WAS UM DIE OHREN FLIEGT LIEGTS HIER DRAN
+              <|> parseInteger -- etc
 
 parseExpr :: Parser LispVal
 parseExpr = try parseAtom --first try to parse a atom
+         <|> try parseComplex
          <|> parseNumber
          <|> parseString -- if this fails try to parse a string
          <|> parseQuoted
