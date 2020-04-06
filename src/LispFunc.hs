@@ -149,6 +149,7 @@ unpackNum' :: LispVal -> ThrowsError LispNumber
 unpackNum' (LispNumber (Integer n)) = return $ Integer n
 unpackNum' (LispNumber (Rational n)) = return $ Rational n
 unpackNum' (LispNumber (Real n)) = return $ Real n
+unpackNum' (LispNumber (Complex n)) = return $ Complex n
 -- if the val is a string try to convert it to a number(weak typing)
 {-unpackNum' (String n) = let parsed = reads n in
                            if null parsed
