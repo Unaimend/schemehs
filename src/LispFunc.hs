@@ -264,6 +264,13 @@ primitives = [("+", numericBinOp1 (+)),
               ("round", round'),
               ("truncate", truncate'),
               ("exp", exp'),
+              ("sin", sine'),
+              ("cos", cosine'),
+              ("tan", tan'),
+              ("log", log'),
+              ("asin", asin'),
+              ("acos", acos'),
+              ("atan", atan'),
               ("exact?", exact)]
 
 
@@ -311,5 +318,68 @@ exp' (LispNumber (Real n) : [])     = return . LispNumber . Real $ exp n
 exp' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex exp " $ (LispNumber . Complex) n
 exp' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
 exp' x  = throwError $ TypeMismatch "Exp' takes numbers" $ List x
+
+
+sine' :: [LispVal] -> ThrowsError LispVal
+sine' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ sin (fromIntegral n)
+sine' (LispNumber (Rational n) : []) = return . LispNumber . Real $ sin (realToFrac n)
+sine' (LispNumber (Real n) : [])     = return . LispNumber . Real $ sin n
+sine' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex sine " $ (LispNumber . Complex) n
+sine' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+sine' x  = throwError $ TypeMismatch "Sine' takes numbers" $ List x
+
+
+asin' :: [LispVal] -> ThrowsError LispVal
+asin' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ asin (fromIntegral n)
+asin' (LispNumber (Rational n) : []) = return . LispNumber . Real $ asin (realToFrac n)
+asin' (LispNumber (Real n) : [])     = return . LispNumber . Real $ asin n
+asin' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex asin " $ (LispNumber . Complex) n
+asin' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+asin' x  = throwError $ TypeMismatch "Asin' takes numbers" $ List x
+
+
+cosine' :: [LispVal] -> ThrowsError LispVal
+cosine' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ cos (fromIntegral n)
+cosine' (LispNumber (Rational n) : []) = return . LispNumber . Real $ cos (realToFrac n)
+cosine' (LispNumber (Real n) : [])     = return . LispNumber . Real $ cos n
+cosine' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex cosine " $ (LispNumber . Complex) n
+cosine' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+cosine' x  = throwError $ TypeMismatch "Cosine' takes numbers" $ List x
+
+
+acos' :: [LispVal] -> ThrowsError LispVal
+acos' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ acos (fromIntegral n)
+acos' (LispNumber (Rational n) : []) = return . LispNumber . Real $ acos (realToFrac n)
+acos' (LispNumber (Real n) : [])     = return . LispNumber . Real $ acos n
+acos' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex acos " $ (LispNumber . Complex) n
+acos' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+acos' x  = throwError $ TypeMismatch "Acos' takes numbers" $ List x
+
+tan' :: [LispVal] -> ThrowsError LispVal
+tan' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ tan (fromIntegral n)
+tan' (LispNumber (Rational n) : []) = return . LispNumber . Real $ tan (realToFrac n)
+tan' (LispNumber (Real n) : [])     = return . LispNumber . Real $ tan n
+tan' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex tan " $ (LispNumber . Complex) n
+tan' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+tan' x  = throwError $ TypeMismatch "Tan' takes numbers" $ List x
+
+
+atan' :: [LispVal] -> ThrowsError LispVal
+atan' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ atan (fromIntegral n)
+atan' (LispNumber (Rational n) : []) = return . LispNumber . Real $ atan (realToFrac n)
+atan' (LispNumber (Real n) : [])     = return . LispNumber . Real $ atan n
+atan' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex atan " $ (LispNumber . Complex) n
+atan' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+atan' x  = throwError $ TypeMismatch "Atan' takes numbers" $ List x
+
+
+log' :: [LispVal] -> ThrowsError LispVal
+log' (LispNumber (Integer n) : [])  = return . LispNumber . Real $ log (fromIntegral n)
+log' (LispNumber (Rational n) : []) = return . LispNumber . Real $ log (realToFrac n)
+log' (LispNumber (Real n) : [])     = return . LispNumber . Real $ log n
+log' (LispNumber (Complex n) : [])  =  throwError $ TypeMismatch "no complex log " $ (LispNumber . Complex) n
+log' ((LispNumber x) : xs)  = throwError $ NumArgs 1 [LispNumber x]
+log' x  = throwError $ TypeMismatch "Log' takes numbers" $ List x
+
 
 
