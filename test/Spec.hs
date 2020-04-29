@@ -80,6 +80,17 @@ integerInterp = [-- math function integer
                  testInter "0.3" "(- -0.3)",
                  testInter  "4" "(floor 4.5)",
                  testInter  "5" "(ceil 4.5)",
+                 --math function trg
+                 testInter "0.0" "(sin 0.0)",
+                 testInter "1.0" "(cos 0.0)",
+                 testInter "0.0" "(tan 0.0)",
+                 testInter "0.0" "(log 1.0)",
+                 --math rounding functions
+                 testInter "2" "(floor 2.5)",
+                 testInter "3" "(ceil 2.5)",
+                 testInter "3" "(round 2.6)",
+                 testInter "2" "(round 2.4)",
+                 testInter "2" "(truncate 2.4)",
                  --Typetesting functions number
                  testInter "#t" "(number? 3 3 3)",
                  testInter "#t" "(number? 3)",
