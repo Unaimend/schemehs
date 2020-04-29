@@ -1,0 +1,10 @@
+
+/home/td/dev/haskell/schemehs/files/stdlib.scm,349
+(define (not x)            (if x #f #t))not1,0
+(define (null? obj)        (if (eqv? obj '()) #t #f))null?2,41
+(define head car)head4,96
+(define tail cdr)tail5,114
+(define (zero? x) (= x 0))zero?7,133
+(define (positive? x) (>= x 0))positive?8,160
+(define (negative? x) (< x 0))negative?9,192
+(define (foldl func accum lst)foldl11,224
