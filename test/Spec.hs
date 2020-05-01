@@ -49,6 +49,10 @@ integerInterp = [-- math function integer
                  testInter "6" "(+ 3 3)",
                  testInter "9" "(+ 3 3 3)",
                  testInter "6" "(+ 1 2 3)",
+
+                 testInter "3.0" "(+ 1 2.0)",
+                 testInter "3/1" "(+ 1 2/1)",
+
                  testInter "6" "(* 1 2 3)",
                  testInter "0" "(* 0 1)",
                  testInter "0" "(* 1 0)",

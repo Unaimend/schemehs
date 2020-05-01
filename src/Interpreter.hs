@@ -174,6 +174,7 @@ load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = fmap List $ load filename
+--readAll _ = throwError $ TypeMismatch "TEST"
 
 
 
